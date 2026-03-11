@@ -1,7 +1,9 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>后台管理</title><link rel="stylesheet" href="/styles.css"/>
-<style>body{background:#f4f7fb}.wrap{max-width:1100px;margin:24px auto;padding:0 16px}.card{background:#fff;border:1px solid #e6ecf5;border-radius:12px;padding:16px;margin-bottom:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.input,textarea{width:100%;padding:10px;border:1px solid #d8e2ef;border-radius:8px}textarea{min-height:80px}.small{font-size:12px;color:#6b7280}.btn{border:0;background:#0d6efd;color:#fff;padding:9px 14px;border-radius:8px;cursor:pointer}.btn.gray{background:#64748b}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.news-item{border:1px dashed #c9d7ea;border-radius:10px;padding:12px;margin-top:10px}.preview{max-width:240px;max-height:120px;border-radius:8px;display:block;margin-top:8px}</style></head><body><div class="wrap">
+<style>body{background:#f4f7fb}.wrap{max-width:1280px;margin:24px auto;padding:0 16px}.card{background:#fff;border:1px solid #e6ecf5;border-radius:12px;padding:16px;margin-bottom:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.input,textarea{width:100%;padding:10px;border:1px solid #d8e2ef;border-radius:8px}textarea{min-height:80px}.small{font-size:12px;color:#6b7280}.btn{border:0;background:#0d6efd;color:#fff;padding:9px 14px;border-radius:8px;cursor:pointer}.btn.gray{background:#64748b}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.news-item{border:1px dashed #c9d7ea;border-radius:10px;padding:12px;margin-top:10px}.preview{max-width:240px;max-height:120px;border-radius:8px;display:block;margin-top:8px}.layout{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}.live-box{position:sticky;top:12px}.live-frame{width:100%;height:620px;border:1px solid #d8e2ef;border-radius:10px;background:#fff}.map-list li{margin:6px 0}@media(max-width:980px){.layout{grid-template-columns:1fr}.live-frame{height:420px}}</style></head><body><div class="wrap">
 <h1>网站后台</h1><p class="small">已优化：固定内容不动。可编辑核心文案、SEO、背景图层、新闻列表与新闻详情。</p>
-<div class="card row"><button class="btn" onclick="saveAll()">保存全部</button><span id="msg"></span></div>
+<div class="card row"><button class="btn" onclick="saveAll()">保存全部</button><span id="msg"></span><span class="small">建议：改完一项就点保存，再看右侧实时预览</span></div>
+
+<div class="layout"><div>
 
 <div class="card"><h3>基础信息</h3><div class="grid"><div><label>网站标题</label><input id="siteTitle" class="input"></div><div><label>LOGO文字</label><input id="logoText" class="input"></div></div></div>
 
@@ -29,6 +31,36 @@
 <div class="card"><h3>背景图层上传</h3><p class="small">可传不同页面/区块背景，不同图层独立设置。</p><div id="bgFields"></div></div>
 <div class="card"><h3>新闻管理（可新增/删除，含详情内容）</h3><div id="newsWrap"></div><div class="row" style="margin-top:10px"><button class="btn gray" onclick="addNews()">+ 新增新闻</button></div></div>
 </div>
+
+<div class="live-box">
+  <div class="card">
+    <h3>前端实时预览</h3>
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn gray" onclick="setPreview('/')">首页</button>
+      <button class="btn gray" onclick="setPreview('/scene.html')">智能场景</button>
+      <button class="btn gray" onclick="setPreview('/iot.html')">IoT</button>
+      <button class="btn gray" onclick="setPreview('/about.html')">关于</button>
+      <button class="btn gray" onclick="setPreview('/contact.html')">联系</button>
+      <button class="btn" onclick="refreshPreview()">刷新预览</button>
+    </div>
+    <iframe id="liveFrame" class="live-frame" src="/"></iframe>
+  </div>
+
+  <div class="card">
+    <h3>字段与前端位置对照</h3>
+    <ul class="map-list small">
+      <li><b>首页主标题 / 主描述</b> → 首页首屏大字与副标题</li>
+      <li><b>场景标题 / 场景描述</b> → 智能场景页头部</li>
+      <li><b>IoT标题 / IoT描述</b> → IoT页头部</li>
+      <li><b>关于标题 / 关于导语</b> → 关于我们页首屏</li>
+      <li><b>联系方式-热线/地址/联系人/邮箱</b> → 联系我们左侧信息</li>
+      <li><b>联系方式-微信二维码</b> → 联系我们右侧扫码区</li>
+      <li><b>SEO 标题/描述</b> → 搜索与分享显示文案（非页面正文）</li>
+      <li><b>背景图层上传</b> → 各页面头图和区块背景</li>
+      <li><b>新闻管理</b> → 新闻中心列表和详情页内容</li>
+    </ul>
+  </div>
+</div></div>
 <script>
 let data={};
 const textKeys=['siteTitle','logoText','homeHeroTitle','homeHeroDesc','sceneTitle','sceneDesc','iotTitle','iotDesc','aboutTitle','aboutLead','contactHotline','contactAddress','contactPerson','contactEmail','contactWeChatQr','contactWeChatNote'];
@@ -40,6 +72,8 @@ function getVal(id){const el=document.getElementById(id);return el?el.value:''}
 function fileToDataUrl(input,target){const f=input.files&&input.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{setVal(target,r.result); updatePreview(target)}; r.readAsDataURL(f)}
 function updatePreview(k){const img=document.getElementById('pre_'+k); const v=getVal(k); if(img){img.src=v||''; img.style.display=v?'block':'none';}}
 function clearBg(k){setVal(k,'');updatePreview(k)}
+function setPreview(path){const f=document.getElementById('liveFrame');if(f)f.src=path||'/'}
+function refreshPreview(){const f=document.getElementById('liveFrame');if(!f)return;const u=new URL(f.src,location.origin);u.searchParams.set('_t',Date.now());f.src=u.pathname+u.search}
 function renderBg(){const root=document.getElementById('bgFields');root.innerHTML=bgKeys.map(k=>`<div class='news-item'><label>${bgLabels[k]||k}</label><input id='${k}' class='input' placeholder='URL或上传'><div class='row' style='margin-top:8px'><input type='file' accept='image/*' onchange='fileToDataUrl(this,"${k}")'><button class='btn gray' onclick='clearBg("${k}")'>清空</button></div><img id='pre_${k}' class='preview' /></div>`).join('');bgKeys.forEach(k=>{setVal(k,data[k]||'');updatePreview(k);});}
 function renderSeo(){const g=document.getElementById('seoGrid');g.innerHTML=seoPages.map(p=>`<div class='news-item'><label>${p} 页标题</label><input id='seo_${p}_title' class='input'><label>描述</label><textarea id='seo_${p}_desc'></textarea></div>`).join('');seoPages.forEach(p=>{setVal(`seo_${p}_title`,data[`seo_${p}_title`]||'');setVal(`seo_${p}_desc`,data[`seo_${p}_desc`]||'');});}
 function updateNewsPreview(i){const v=getVal('n_img_'+i);const img=document.getElementById('n_pre_'+i);img.src=v||'';img.style.display=v?'block':'none'}
