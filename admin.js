@@ -10,9 +10,9 @@ function addPanel(doc,host,key,label){
   if(!host||host.dataset.ocPanel==='1') return; host.dataset.ocPanel='1';
   if(getComputedStyle(host).position==='static') host.style.position='relative';
   const box=doc.createElement('div'); box.style.cssText='position:absolute;right:8px;top:8px;z-index:9999;display:flex;gap:6px';
-  const up=doc.createElement('button'); up.textContent=label; up.style.cssText='border:0;border-radius:6px;padding:4px 8px;font-size:12px;background:#16a34a;color:#fff';
+  const up=doc.createElement('button'); up.textContent=label; up.setAttribute('data-oc-panel-btn','1'); up.style.cssText='border:0;border-radius:6px;padding:4px 8px;font-size:12px;background:#16a34a;color:#fff';
   up.onclick=(e)=>{e.preventDefault();e.stopPropagation();imageKey=key;$('#pick').click();msg('选择图片：'+key)};
-  const del=doc.createElement('button'); del.textContent='清除图片'; del.style.cssText='border:0;border-radius:6px;padding:4px 8px;font-size:12px;background:#ef4444;color:#fff';
+  const del=doc.createElement('button'); del.textContent='清除图片'; del.setAttribute('data-oc-panel-btn','1'); del.style.cssText='border:0;border-radius:6px;padding:4px 8px;font-size:12px;background:#ef4444;color:#fff';
   del.onclick=(e)=>{e.preventDefault();e.stopPropagation();clearImage(key)};
   box.append(up,del); host.appendChild(box);
 }
@@ -36,11 +36,27 @@ function bindEditable(){
     if(a){e.preventDefault();e.stopPropagation();}
   }, true);
 
-  d.querySelectorAll('h1,h2,h3,h4,h5,h6,p,span,li,a,label,strong,em,b,small,button').forEach(el=>{
+  // 兜底：点击任何有文字的元素都可立即进入编辑
+  d.addEventListener('click', function(e){
+    var t=e.target;
+    if(!t || !t.closest) return;
+    var panelBtn=t.closest('[data-oc-panel-btn]');
+    if(panelBtn) return;
+    var el=t.closest('h1,h2,h3,h4,h5,h6,p,span,li,a,label,strong,em,b,small,button,div');
+    if(!el) return;
+    if(el.querySelector && el.querySelector('img,iframe,input,textarea,svg')) return;
+    var text=(el.textContent||'').trim();
+    if(!text) return;
+    if(el.getAttribute('contenteditable')!=='true') el.setAttribute('contenteditable','true');
+    el.focus();
+  }, false);
+
+  d.querySelectorAll('h1,h2,h3,h4,h5,h6,p,span,li,a,label,strong,em,b,small,button,div').forEach(el=>{
     if(el.closest('script,style')) return;
+    if(el.querySelector('img,iframe,input,textarea,svg')) return;
     const t=(el.textContent||'').trim(); if(!t) return;
     const id=stableId(el,d); if(data.customText[id]!==undefined) el.textContent=data.customText[id];
-    el.contentEditable='true'; el.style.cursor='text';
+    el.setAttribute('contenteditable','true'); el.style.cursor='text'; el.style.webkitUserSelect='text';
     el.onfocus=()=>{el.style.outline='2px dashed #2563eb';};
     el.onblur=()=>{el.style.outline=''; data.customText[id]=el.textContent.trim(); debounceSave();};
     el.oninput=()=>{data.customText[id]=el.textContent.trim(); debounceSave();};
