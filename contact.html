@@ -27,7 +27,10 @@
       <h3 style="margin-top:14px">邮箱</h3><p data-key="contactEmail"></p>
     </article>
     <article class="card contact-right">
-      <div class="map-box">地图展示区（后续可接入高德/百度地图）</div>
+      <div class="map-box">
+        <iframe id="contactMapFrame" class="map-iframe" title="地图位置" loading="lazy"></iframe>
+        <div id="contactMapPlaceholder" class="map-placeholder">请在后台设置地图链接（支持高德分享链接/iframe地址）</div>
+      </div>
       <div class="wechat-box">
         <h3>微信咨询</h3>
         <p data-key="contactWeChatNote">微信扫码可快速进入咨询</p>

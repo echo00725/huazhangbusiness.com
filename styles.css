@@ -179,12 +179,11 @@ a{text-decoration:none;color:inherit}
   border-radius:16px;
   border:1px dashed #9fb7de;
   background:linear-gradient(45deg,#e4eefb,#dbe8f9);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#48638f;
-  font-size:20px;
+  position:relative;
+  overflow:hidden;
 }
+.map-iframe{width:100%;height:100%;border:0;display:none}
+.map-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#48638f;font-size:18px;padding:14px;text-align:center}
 
 .contact-right{display:flex;flex-direction:column;gap:20px}
 .wechat-box h3{margin:0 0 8px}

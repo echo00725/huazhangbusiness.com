@@ -50,6 +50,25 @@ async function applyContent(){
       if(qrPlaceholder) qrPlaceholder.style.display = hasQr ? 'none' : 'flex';
     }
 
+    const mapFrame = document.getElementById('contactMapFrame');
+    const mapPlaceholder = document.getElementById('contactMapPlaceholder');
+    if(mapFrame){
+      const mapUrl = data.contactMapEmbed || '';
+      const hasMap = /^https?:\/\//.test(mapUrl);
+      if(hasMap){
+        mapFrame.src = mapUrl;
+        mapFrame.style.display = 'block';
+        if(mapPlaceholder) mapPlaceholder.style.display = 'none';
+      }else{
+        mapFrame.removeAttribute('src');
+        mapFrame.style.display = 'none';
+        if(mapPlaceholder){
+          mapPlaceholder.style.display = 'flex';
+          mapPlaceholder.textContent = data.contactMapTip || '请在后台设置地图链接（支持高德分享链接/iframe地址）';
+        }
+      }
+    }
+
     document.querySelectorAll('[data-bg-key]').forEach(el=>{
       const k = el.dataset.bgKey;
       const url = data[k];

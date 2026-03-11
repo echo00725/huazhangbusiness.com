@@ -22,6 +22,8 @@
     <button class="btn gray" onclick="openPage('/contact.html')">联系</button>
     <button class="btn" onclick="saveAll(false)">保存</button>
     <button class="btn gray" onclick="toggleAutoSave()" id="autoBtn">自动保存：开</button>
+    <button class="btn gray" onclick="openMapSettings()">地图设置</button>
+    <button class="btn gray" onclick="clearCurrentImage()">清除当前图片</button>
     <input id="pick" type="file" accept="image/*" style="display:none" onchange="pickImage(this)">
     <span id="msg" class="msg">直接在预览里点文字编辑；点图片/背景可上传替换</span>
   </div>
@@ -47,6 +49,35 @@ async function loadData(){ data = await fetch('/api/content').then(r=>r.json());
 function setMsg(s){ document.getElementById('msg').textContent=s; }
 function toggleAutoSave(){ autoSave=!autoSave; document.getElementById('autoBtn').textContent='自动保存：'+(autoSave?'开':'关'); setMsg(autoSave?'自动保存已开启（停3秒保存）':'自动保存已关闭'); }
 function debounceSave(){ if(!autoSave) return; clearTimeout(t); t=setTimeout(()=>saveAll(true),3000); }
+function clearCurrentImage(){
+  if(!imageKey){ setMsg('先点击一个图片区域，再点“清除当前图片”'); return; }
+  data[imageKey]='';
+  const doc=document.getElementById('live').contentDocument;
+  if(doc){
+    doc.querySelectorAll(`[data-key-src="${imageKey}"]`).forEach(el=>{el.removeAttribute('src'); el.style.display='none';});
+    doc.querySelectorAll(`[data-bg-key="${imageKey}"]`).forEach(el=>el.style.backgroundImage='');
+  }
+  setMsg('已清除图片：'+imageKey);
+  debounceSave();
+}
+function openMapSettings(){
+  const embed=prompt('请输入地图链接（高德分享链接或iframe地址）', data.contactMapEmbed||'') ?? data.contactMapEmbed || '';
+  const tip=prompt('无地图时提示文案', data.contactMapTip||'请在后台设置地图链接（支持高德分享链接/iframe地址）') ?? data.contactMapTip || '';
+  data.contactMapEmbed=embed.trim();
+  data.contactMapTip=tip.trim();
+  const doc=document.getElementById('live').contentDocument;
+  if(doc){
+    const frame=doc.getElementById('contactMapFrame');
+    const ph=doc.getElementById('contactMapPlaceholder');
+    if(frame){
+      const ok=/^https?:\/\//.test(data.contactMapEmbed||'');
+      if(ok){frame.src=data.contactMapEmbed; frame.style.display='block'; if(ph) ph.style.display='none';}
+      else {frame.removeAttribute('src'); frame.style.display='none'; if(ph){ph.style.display='flex'; ph.textContent=data.contactMapTip||'请在后台设置地图链接（支持高德分享链接/iframe地址）';}}
+    }
+  }
+  setMsg('地图设置已更新，记得保存');
+  debounceSave();
+}
 
 function openPage(path){ const f=document.getElementById('live'); f.src=(path||'/')+'?_v='+Date.now(); }
 
