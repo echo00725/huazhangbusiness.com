@@ -6,176 +6,27 @@
   <title>可视化后台（纯预览编辑）</title>
   <style>
     body{margin:0;background:#0b1220;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
-    .bar{position:fixed;left:0;right:0;top:0;z-index:9999;display:flex;gap:8px;align-items:center;padding:10px 12px;background:rgba(9,14,26,.92);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.15)}
+    .bar{position:fixed;left:0;right:0;top:0;z-index:9999;display:flex;gap:8px;align-items:center;padding:10px 12px;background:rgba(9,14,26,.92);border-bottom:1px solid rgba(255,255,255,.15);flex-wrap:wrap}
     .btn{border:0;border-radius:8px;padding:8px 12px;cursor:pointer;background:#1d4ed8;color:#fff}
     .btn.gray{background:#334155}
     .msg{font-size:12px;color:#d1d5db;margin-left:6px}
-    #live{position:fixed;left:0;right:0;top:52px;bottom:0;width:100%;height:calc(100vh - 52px);border:0;background:#fff}
+    #live{position:fixed;left:0;right:0;top:56px;bottom:0;width:100%;height:calc(100vh - 56px);border:0;background:#fff}
   </style>
 </head>
 <body>
   <div class="bar">
-    <button class="btn gray" onclick="openPage('/')">首页</button>
-    <button class="btn gray" onclick="openPage('/scene.html')">智能场景</button>
-    <button class="btn gray" onclick="openPage('/iot.html')">IoT</button>
-    <button class="btn gray" onclick="openPage('/about.html')">关于</button>
-    <button class="btn gray" onclick="openPage('/contact.html')">联系</button>
-    <button class="btn" onclick="saveAll(false)">保存</button>
-    <button class="btn gray" onclick="toggleAutoSave()" id="autoBtn">自动保存：开</button>
-    <button class="btn gray" onclick="openMapSettings()">地图设置</button>
-    <input id="pick" type="file" accept="image/*" style="display:none" onchange="pickImage(this)">
+    <button class="btn gray" data-go="/">首页</button>
+    <button class="btn gray" data-go="/scene.html">智能场景</button>
+    <button class="btn gray" data-go="/iot.html">IoT</button>
+    <button class="btn gray" data-go="/about.html">关于</button>
+    <button class="btn gray" data-go="/contact.html">联系</button>
+    <button class="btn" id="saveBtn">保存</button>
+    <button class="btn gray" id="autoBtn">自动保存：开</button>
+    <button class="btn gray" id="mapBtn">地图设置</button>
+    <input id="pick" type="file" accept="image/*" style="display:none">
     <span id="msg" class="msg">直接点文字编辑；图片区域有“上传/清除”按钮</span>
   </div>
   <iframe id="live" src="/"></iframe>
-
-<script>
-let data={};
-let autoSave=true;
-let timer=null;
-let imageKey='';
-
-function setMsg(s){ document.getElementById('msg').textContent=s; }
-function toggleAutoSave(){ autoSave=!autoSave; document.getElementById('autoBtn').textContent='自动保存：'+(autoSave?'开':'关'); setMsg(autoSave?'自动保存已开启（停3秒保存）':'自动保存已关闭'); }
-function debounceSave(){ if(!autoSave) return; clearTimeout(timer); timer=setTimeout(()=>saveAll(true),3000); }
-function openPage(path){ document.getElementById('live').src=(path||'/')+'?_v='+Date.now(); }
-
-function stableId(el,doc){
-  const parts=[]; let cur=el;
-  while(cur && cur!==doc.body){
-    const p=cur.parentElement; if(!p) break;
-    const i=[...p.children].indexOf(cur);
-    parts.unshift(`${cur.tagName.toLowerCase()}:${i}`);
-    cur=p;
-  }
-  return parts.join('>');
-}
-
-function addImagePanel(doc,host,key,label){
-  if(!host || host.dataset.ocPanel==='1') return;
-  host.dataset.ocPanel='1';
-  if(getComputedStyle(host).position==='static') host.style.position='relative';
-  host.style.overflow='visible';
-
-  const box=doc.createElement('div');
-  box.style.cssText='position:absolute;right:8px;top:8px;z-index:9999;display:flex;gap:6px';
-
-  const up=doc.createElement('button');
-  up.type='button';
-  up.textContent=label || '请上传该区域图片';
-  up.style.cssText='border:0;border-radius:6px;padding:4px 8px;font-size:12px;background:rgba(22,163,74,.92);color:#fff;cursor:pointer';
-  up.onclick=(e)=>{e.preventDefault();e.stopPropagation();imageKey=key;document.getElementById('pick').click();setMsg('选择图片：'+key);};
-
-  const del=doc.createElement('button');
-  del.type='button';
-  del.textContent='清除图片';
-  del.style.cssText='border:0;border-radius:6px;padding:4px 8px;font-size:12px;background:rgba(239,68,68,.92);color:#fff;cursor:pointer';
-  del.onclick=(e)=>{e.preventDefault();e.stopPropagation();clearImageByKey(key);};
-
-  box.appendChild(up); box.appendChild(del); host.appendChild(box);
-}
-
-function clearImageByKey(key){
-  data[key]='';
-  const doc=document.getElementById('live').contentDocument;
-  if(doc){
-    doc.querySelectorAll(`[data-key-src="${key}"]`).forEach(el=>{el.removeAttribute('src');el.style.display='none';});
-    doc.querySelectorAll(`[data-bg-key="${key}"]`).forEach(el=>el.style.backgroundImage='');
-    const ph=doc.getElementById('wechatQrPlaceholder'); if(ph && key==='contactWeChatQr') ph.style.display='flex';
-  }
-  setMsg('已清除：'+key);
-  debounceSave();
-}
-
-function bindEditable(){
-  const doc=document.getElementById('live').contentDocument;
-  if(!doc) return;
-  if(!data.customText) data.customText={};
-
-  // 全局禁用链接跳转（捕获阶段），防止点到“联系我们”等直接跳页
-  doc.addEventListener('click', (e)=>{
-    const a=e.target && e.target.closest ? e.target.closest('a') : null;
-    if(a){ e.preventDefault(); e.stopPropagation(); }
-  }, true);
-
-  // 文字：放开所有常见文本标签直接编辑（不再限制叶子节点）
-  const textSel='h1,h2,h3,h4,h5,h6,p,span,li,a,label,strong,em,b,small,button';
-  doc.querySelectorAll(textSel).forEach(el=>{
-    if(el.closest('script,style')) return;
-    const txt=(el.textContent||'').trim();
-    if(!txt) return;
-    const id=stableId(el,doc);
-    if(data.customText[id]!==undefined) el.textContent=data.customText[id];
-    el.contentEditable='true';
-    el.style.cursor='text';
-    el.style.webkitUserSelect='text';
-    el.onfocus=()=>{el.style.outline='2px dashed #2563eb'; setMsg('正在编辑文字…');};
-    el.onblur=()=>{el.style.outline=''; data.customText[id]=el.textContent.trim(); debounceSave();};
-    el.oninput=()=>{data.customText[id]=el.textContent.trim(); debounceSave();};
-    el.onclick=(e)=>{ e.stopPropagation(); };
-  });
-
-  // 图片区域
-  doc.querySelectorAll('[data-key-src]').forEach(el=>{
-    const key=el.getAttribute('data-key-src');
-    el.style.outline='2px dashed rgba(22,163,74,.45)';
-    addImagePanel(doc, el.parentElement || el, key, '请上传该图片');
-  });
-
-  // 背景区域
-  doc.querySelectorAll('[data-bg-key]').forEach(el=>{
-    const key=el.getAttribute('data-bg-key');
-    el.style.outline='2px dashed rgba(245,158,11,.45)';
-    addImagePanel(doc, el, key, '请上传该区域图片');
-  });
-}
-
-function pickImage(input){
-  const f=input.files&&input.files[0]; if(!f||!imageKey) return;
-  const r=new FileReader();
-  r.onload=()=>{
-    data[imageKey]=r.result;
-    const doc=document.getElementById('live').contentDocument;
-    if(doc){
-      doc.querySelectorAll(`[data-key-src="${imageKey}"]`).forEach(el=>{el.src=r.result;el.style.display='block';});
-      doc.querySelectorAll(`[data-bg-key="${imageKey}"]`).forEach(el=>el.style.backgroundImage=`linear-gradient(rgba(10,56,136,.56),rgba(10,56,136,.62)),url(${r.result})`);
-      const ph=doc.getElementById('wechatQrPlaceholder'); if(ph && imageKey==='contactWeChatQr') ph.style.display='none';
-    }
-    setMsg('已更新图片：'+imageKey);
-    debounceSave();
-  };
-  r.readAsDataURL(f); input.value='';
-}
-
-function openMapSettings(){
-  const embed=prompt('请输入地图链接（高德分享链接/iframe地址）', data.contactMapEmbed||'') ?? data.contactMapEmbed || '';
-  const tip=prompt('无地图时提示文案', data.contactMapTip||'请在后台设置地图链接（支持高德分享链接/iframe地址）') ?? data.contactMapTip || '';
-  data.contactMapEmbed=embed.trim();
-  data.contactMapTip=tip.trim();
-  setMsg('地图设置已更新');
-  debounceSave();
-}
-
-async function loadData(){ data = await fetch('/api/content').then(r=>r.json()); }
-
-async function saveAll(silent){
-  const payload={...data};
-  const pwd=localStorage.getItem('admin_pwd')||'';
-  if(pwd) payload.password=pwd;
-  let r=await fetch('/api/content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-  let res=await r.json();
-  if(r.status===401){
-    const p=prompt('请输入后台保存密码');
-    if(p){ localStorage.setItem('admin_pwd',p); payload.password=p; r=await fetch('/api/content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); res=await r.json(); }
-  }
-  setMsg(res.ok?(silent?'✅ 已自动保存':'✅ 保存成功'):'❌ 保存失败：'+(res.error||'未知错误'));
-}
-
-(async function init(){
-  await loadData();
-  const f=document.getElementById('live');
-  f.addEventListener('load',()=>setTimeout(bindEditable,220));
-  openPage('/');
-})();
-</script>
+  <script src="/admin.js"></script>
 </body>
 </html>
