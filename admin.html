@@ -42,6 +42,7 @@
       <button class="btn gray" onclick="setPreview('/about.html')">关于</button>
       <button class="btn gray" onclick="setPreview('/contact.html')">联系</button>
       <button class="btn" onclick="refreshPreview()">刷新预览</button>
+      <button class="btn gray" onclick="toggleInspector()" id="inspectorBtn">开启点选定位</button>
     </div>
     <iframe id="liveFrame" class="live-frame" src="/"></iframe>
   </div>
@@ -72,8 +73,30 @@ function getVal(id){const el=document.getElementById(id);return el?el.value:''}
 function fileToDataUrl(input,target){const f=input.files&&input.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{setVal(target,r.result); updatePreview(target)}; r.readAsDataURL(f)}
 function updatePreview(k){const img=document.getElementById('pre_'+k); const v=getVal(k); if(img){img.src=v||''; img.style.display=v?'block':'none';}}
 function clearBg(k){setVal(k,'');updatePreview(k)}
-function setPreview(path){const f=document.getElementById('liveFrame');if(f)f.src=path||'/'}
-function refreshPreview(){const f=document.getElementById('liveFrame');if(!f)return;const u=new URL(f.src,location.origin);u.searchParams.set('_t',Date.now());f.src=u.pathname+u.search}
+function setPreview(path){const f=document.getElementById('liveFrame');if(f){f.src=path||'/';setTimeout(bindPreviewInspector,500)}}
+function refreshPreview(){const f=document.getElementById('liveFrame');if(!f)return;const u=new URL(f.src,location.origin);u.searchParams.set('_t',Date.now());f.src=u.pathname+u.search;setTimeout(bindPreviewInspector,500)}
+let inspectorOn=false;
+function toggleInspector(){inspectorOn=!inspectorOn;const b=document.getElementById('inspectorBtn');if(b)b.textContent=inspectorOn?'关闭点选定位':'开启点选定位';bindPreviewInspector();}
+function focusField(key){
+  const el=document.getElementById(key);
+  if(!el){document.getElementById('msg').textContent='⚠️ 当前点选区域暂无对应字段：'+key;return;}
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.focus();
+  el.style.boxShadow='0 0 0 3px rgba(13,110,253,.25)';
+  setTimeout(()=>el.style.boxShadow='',1200);
+  document.getElementById('msg').textContent='🎯 已定位字段：'+key;
+}
+function bindPreviewInspector(){
+  const f=document.getElementById('liveFrame');
+  if(!f || !f.contentDocument) return;
+  const doc=f.contentDocument;
+  doc.querySelectorAll('[data-key]').forEach(node=>{
+    node.style.cursor=inspectorOn?'crosshair':'';
+    node.onmouseenter=()=>{if(inspectorOn)node.style.outline='2px dashed #0d6efd'};
+    node.onmouseleave=()=>{node.style.outline=''};
+    node.onclick=(e)=>{if(!inspectorOn)return; e.preventDefault(); e.stopPropagation(); const k=node.getAttribute('data-key'); if(k)focusField(k);};
+  });
+}
 function renderBg(){const root=document.getElementById('bgFields');root.innerHTML=bgKeys.map(k=>`<div class='news-item'><label>${bgLabels[k]||k}</label><input id='${k}' class='input' placeholder='URL或上传'><div class='row' style='margin-top:8px'><input type='file' accept='image/*' onchange='fileToDataUrl(this,"${k}")'><button class='btn gray' onclick='clearBg("${k}")'>清空</button></div><img id='pre_${k}' class='preview' /></div>`).join('');bgKeys.forEach(k=>{setVal(k,data[k]||'');updatePreview(k);});}
 function renderSeo(){const g=document.getElementById('seoGrid');g.innerHTML=seoPages.map(p=>`<div class='news-item'><label>${p} 页标题</label><input id='seo_${p}_title' class='input'><label>描述</label><textarea id='seo_${p}_desc'></textarea></div>`).join('');seoPages.forEach(p=>{setVal(`seo_${p}_title`,data[`seo_${p}_title`]||'');setVal(`seo_${p}_desc`,data[`seo_${p}_desc`]||'');});}
 function updateNewsPreview(i){const v=getVal('n_img_'+i);const img=document.getElementById('n_pre_'+i);img.src=v||'';img.style.display=v?'block':'none'}
@@ -81,7 +104,7 @@ function newsUpload(input,i){const f=input.files&&input.files[0];if(!f)return;co
 function renderNews(){const wrap=document.getElementById('newsWrap');const items=Array.isArray(data.newsItems)?data.newsItems:[];wrap.innerHTML=items.map((n,i)=>`<div class='news-item'><div class='row'><strong>新闻 #${i+1}</strong><button class='btn gray' onclick='delNews(${i})'>删除</button></div><label>标题</label><input class='input' id='n_title_${i}' value='${(n.title||'').replace(/'/g,'&#39;')}'><label>列表摘要</label><textarea id='n_text_${i}'>${n.text||''}</textarea><label>详情正文</label><textarea id='n_content_${i}'>${n.content||''}</textarea><label>信息（分类｜日期）</label><input class='input' id='n_meta_${i}' value='${(n.meta||'').replace(/'/g,'&#39;')}'><label>配图</label><input class='input' id='n_img_${i}' value='${(n.image||'').replace(/'/g,'&#39;')}' oninput='updateNewsPreview(${i})'><div class='row' style='margin-top:8px'><input type='file' accept='image/*' onchange='newsUpload(this,${i})'></div><img id='n_pre_${i}' class='preview' style='${n.image?'display:block':'display:none'}' src='${n.image||''}'></div>`).join('');}
 function addNews(){if(!Array.isArray(data.newsItems))data.newsItems=[];data.newsItems.push({title:'新新闻标题',text:'新闻摘要',content:'新闻详情内容',meta:'公司动态｜2026-03-10',image:''});renderNews();}
 function delNews(i){data.newsItems.splice(i,1);renderNews();}
-async function load(){data=await fetch('/api/content').then(r=>r.json());textKeys.forEach(k=>setVal(k,data[k]||''));updatePreview('contactWeChatQr');renderSeo();renderBg();renderNews();}
+async function load(){data=await fetch('/api/content').then(r=>r.json());textKeys.forEach(k=>setVal(k,data[k]||''));updatePreview('contactWeChatQr');renderSeo();renderBg();renderNews();setTimeout(bindPreviewInspector,600);}
 async function saveAll(){textKeys.forEach(k=>data[k]=getVal(k));seoPages.forEach(p=>{data[`seo_${p}_title`]=getVal(`seo_${p}_title`);data[`seo_${p}_desc`]=getVal(`seo_${p}_desc`);});bgKeys.forEach(k=>data[k]=getVal(k));data.newsItems=(Array.isArray(data.newsItems)?data.newsItems:[]).map((_,i)=>({title:getVal('n_title_'+i),text:getVal('n_text_'+i),content:getVal('n_content_'+i),meta:getVal('n_meta_'+i),image:getVal('n_img_'+i)}));const payload={...data};const cachedPwd=localStorage.getItem('admin_pwd')||'';if(cachedPwd)payload.password=cachedPwd;let r=await fetch('/api/content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});let res=await r.json();if(r.status===401){const pwd=prompt('请输入后台保存密码');if(pwd){localStorage.setItem('admin_pwd',pwd);payload.password=pwd;r=await fetch('/api/content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});res=await r.json();}}document.getElementById('msg').textContent=res.ok?'✅ 保存成功':'❌ 保存失败：'+(res.error||'未知错误');}
 load();
 </script></body></html>
