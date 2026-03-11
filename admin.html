@@ -54,6 +54,7 @@ function addImagePanel(doc,host,key,label){
   if(!host || host.dataset.ocPanel==='1') return;
   host.dataset.ocPanel='1';
   if(getComputedStyle(host).position==='static') host.style.position='relative';
+  host.style.overflow='visible';
 
   const box=doc.createElement('div');
   box.style.cssText='position:absolute;right:8px;top:8px;z-index:9999;display:flex;gap:6px';
@@ -90,24 +91,27 @@ function bindEditable(){
   if(!doc) return;
   if(!data.customText) data.customText={};
 
-  // 禁止链接跳转，避免误触
-  doc.querySelectorAll('a').forEach(a=>a.onclick=(e)=>e.preventDefault());
+  // 全局禁用链接跳转（捕获阶段），防止点到“联系我们”等直接跳页
+  doc.addEventListener('click', (e)=>{
+    const a=e.target && e.target.closest ? e.target.closest('a') : null;
+    if(a){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
 
-  // 文字：只让“叶子文本节点”可编辑
+  // 文字：放开所有常见文本标签直接编辑（不再限制叶子节点）
   const textSel='h1,h2,h3,h4,h5,h6,p,span,li,a,label,strong,em,b,small,button';
   doc.querySelectorAll(textSel).forEach(el=>{
     if(el.closest('script,style')) return;
-    if(el.children.length>0) return;
     const txt=(el.textContent||'').trim();
     if(!txt) return;
     const id=stableId(el,doc);
     if(data.customText[id]!==undefined) el.textContent=data.customText[id];
     el.contentEditable='true';
     el.style.cursor='text';
+    el.style.webkitUserSelect='text';
     el.onfocus=()=>{el.style.outline='2px dashed #2563eb'; setMsg('正在编辑文字…');};
     el.onblur=()=>{el.style.outline=''; data.customText[id]=el.textContent.trim(); debounceSave();};
     el.oninput=()=>{data.customText[id]=el.textContent.trim(); debounceSave();};
-    el.onclick=(e)=>e.stopPropagation();
+    el.onclick=(e)=>{ e.stopPropagation(); };
   });
 
   // 图片区域
