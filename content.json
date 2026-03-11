@@ -17,8 +17,9 @@
   "contactPerson": "请填写",
   "contactEmail": "请填写",
   "contactWeChatQr": "",
+  "contactWeChatQr2": "",
   "contactWeChatNote": "微信扫码可快速进入咨询",
-  "contactMapEmbed": "https://surl.amap.com/d04yfCmy93C",
+  "contactMapEmbed": "",
   "contactMapTip": "请在后台设置地图链接（支持高德分享链接/iframe地址）",
   "seo_home_title": "平顶山美的/小天鹅/COLMO服务商_华章商贸",
   "seo_home_desc": "华章商贸提供美的系家电零售、工程配套、安装交付与维保售后，覆盖家庭与商业场景。",
@@ -69,11 +70,5 @@
       "meta": "活动资讯｜2026-03-10",
       "image": ""
     }
-  ],
-  "customText": {
-    "section:1>h2:0": "授权运营商：美的 COLMO 小天鹅",
-    "section:2>div:0>h2:0": "核心能力矩阵",
-    "header:0>div:0>div:1>a:1": "智能场景",
-    "section:1>div:0>article:0>h3:2": "地址"
-  }
+  ]
 }

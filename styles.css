@@ -194,6 +194,7 @@ a{text-decoration:none;color:inherit}
 .contact-right{display:flex;flex-direction:column;gap:20px}
 .wechat-box h3{margin:0 0 8px}
 .wechat-box p{margin:0 0 12px}
+.wechat-qr-grid{display:flex;gap:12px;flex-wrap:wrap}
 .wechat-qr{
   width:220px;
   height:220px;
@@ -278,6 +279,7 @@ a{text-decoration:none;color:inherit}
   .news-item p{font-size:16px}
   .cards.two,.cards.three,.cards.four{grid-template-columns:1fr}
   .wechat-qr,.qr-placeholder{width:180px;height:180px}
+  .wechat-qr-grid{gap:10px}
   .map-placeholder-inner p{font-size:18px}
   .map-brand span{font-size:14px}
 }

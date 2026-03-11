@@ -42,13 +42,16 @@ async function applyContent(){
       if(data[k]) el.src = data[k];
     });
 
-    const qr = document.querySelector('[data-key-src="contactWeChatQr"]');
+    const qrEls = [...document.querySelectorAll('[data-key-src="contactWeChatQr"],[data-key-src="contactWeChatQr2"]')];
     const qrPlaceholder = document.getElementById('wechatQrPlaceholder');
-    if(qr){
-      const hasQr = !!data.contactWeChatQr;
-      qr.style.display = hasQr ? 'block' : 'none';
-      if(qrPlaceholder) qrPlaceholder.style.display = hasQr ? 'none' : 'flex';
-    }
+    let shown = 0;
+    qrEls.forEach(el=>{
+      const k = el.dataset.keySrc;
+      const has = !!data[k];
+      el.style.display = has ? 'block' : 'none';
+      if(has) shown++;
+    });
+    if(qrPlaceholder) qrPlaceholder.style.display = shown>0 ? 'none' : 'flex';
 
     const mapFrame = document.getElementById('contactMapFrame');
     const mapPlaceholder = document.getElementById('contactMapPlaceholder');
