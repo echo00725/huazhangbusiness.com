@@ -63,13 +63,15 @@ async function saveAll(silent){
 }
 
 async function init(){
+  document.body.dataset.adminReady='0';
   data=await fetch('/api/content').then(r=>r.json());
   document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>openPage(b.dataset.go)));
   $('#saveBtn').addEventListener('click',()=>saveAll(false));
   $('#autoBtn').addEventListener('click',()=>{autoSave=!autoSave; $('#autoBtn').textContent='自动保存：'+(autoSave?'开':'关');});
   $('#mapBtn').addEventListener('click',openMapSettings);
   $('#pick').addEventListener('change',e=>{pickImage(e.target.files[0]); e.target.value='';});
-  $('#live').addEventListener('load',()=>setTimeout(bindEditable,180));
+  $('#live').addEventListener('load',()=>setTimeout(()=>{ bindEditable(); msg('✅ 后台已就绪：可直接改文字，图片用上传/清除按钮'); },180));
+  document.body.dataset.adminReady='1';
   openPage('/');
 }
-init();
+init().catch(e=>{ msg('❌ 后台初始化失败：'+String(e)); console.error(e); });
