@@ -74,6 +74,7 @@
   "customText": {
     "header:0>div:0>div:1>a:6": "联系我们",
     "header:0>div:0>div:1>a:0": "首页",
-    "section:1>div:0>article:1>div:0>div:1>div:0>div:0>span:1": "高德地图导航"
+    "section:1>div:0>article:1>div:0>div:1>div:0>div:0>span:1": "高德地图导航",
+    "section:1>div:0>article:1>div:0>div:1>div:0>p:1": "请在后台设置地图链接"
   }
 }
