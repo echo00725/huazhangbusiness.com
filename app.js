@@ -1,5 +1,25 @@
 function pageKey(){ return document.body.dataset.page || 'home'; }
 function q(name){ return new URLSearchParams(location.search).get(name); }
+function stableId(el){
+  const parts=[];
+  let cur=el;
+  while(cur && cur!==document.body){
+    const p=cur.parentElement; if(!p) break;
+    const i=[...p.children].indexOf(cur);
+    parts.unshift(`${cur.tagName.toLowerCase()}:${i}`);
+    cur=p;
+  }
+  return parts.join('>');
+}
+function applyTextOverrides(map){
+  if(!map) return;
+  const sel='h1,h2,h3,h4,h5,h6,p,a,li,span,button,label,strong,em,b,small';
+  document.querySelectorAll(sel).forEach(el=>{
+    if(el.closest('script,style')) return;
+    const id=stableId(el);
+    if(map[id]!==undefined) el.textContent = map[id];
+  });
+}
 
 async function applyContent(){
   try{
@@ -79,6 +99,8 @@ async function applyContent(){
         document.title = `${n.title || '新闻详情'} - 华章商贸`;
       }
     }
+
+    applyTextOverrides(data.customText);
 
     const y = document.getElementById('year');
     if(y) y.textContent = new Date().getFullYear();

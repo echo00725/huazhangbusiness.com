@@ -32,6 +32,16 @@ let data={};
 let autoSave=true;
 let t=null;
 let imageKey='';
+function stableId(el,doc){
+  const parts=[]; let cur=el;
+  while(cur && cur!==doc.body){
+    const p=cur.parentElement; if(!p) break;
+    const i=[...p.children].indexOf(cur);
+    parts.unshift(`${cur.tagName.toLowerCase()}:${i}`);
+    cur=p;
+  }
+  return parts.join('>');
+}
 
 async function loadData(){ data = await fetch('/api/content').then(r=>r.json()); }
 function setMsg(s){ document.getElementById('msg').textContent=s; }
@@ -57,16 +67,21 @@ function bindEditable(){
   const doc=f.contentDocument;
   if(!doc) return;
 
-  // 文本可直接改
-  doc.querySelectorAll('[data-key]').forEach(el=>{
-    const k=el.getAttribute('data-key');
-    if(!(k in data)) return;
+  // 所有文字可直接改（不限 data-key）
+  if(!data.customText) data.customText={};
+  const textSel='h1,h2,h3,h4,h5,h6,p,a,li,span,button,label,strong,em,b,small';
+  doc.querySelectorAll(textSel).forEach(el=>{
+    if(el.closest('script,style')) return;
+    if(el.querySelector('img,input,textarea,iframe,svg')) return;
+    const id=stableId(el,doc);
+    if(data.customText[id]!==undefined) el.textContent=data.customText[id];
     el.contentEditable='true';
     el.style.outline='none';
     el.style.cursor='text';
-    el.onfocus=()=>{el.style.outline='2px dashed #2563eb'; setMsg('正在编辑：'+k)};
-    el.onblur=()=>{el.style.outline='none'; data[k]=el.textContent.trim(); debounceSave();};
-    el.oninput=()=>{data[k]=el.textContent.trim(); debounceSave();};
+    el.onclick=(e)=>{e.stopPropagation();};
+    el.onfocus=()=>{el.style.outline='2px dashed #2563eb'; setMsg('正在编辑文字（可直接输入）');};
+    el.onblur=()=>{el.style.outline='none'; data.customText[id]=el.textContent.trim(); debounceSave();};
+    el.oninput=()=>{data.customText[id]=el.textContent.trim(); debounceSave();};
   });
 
   // 图片：仅点“上传提示”触发上传，不再抢文字点击
