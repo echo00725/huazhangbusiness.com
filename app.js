@@ -52,13 +52,27 @@ async function applyContent(){
 
     const mapFrame = document.getElementById('contactMapFrame');
     const mapPlaceholder = document.getElementById('contactMapPlaceholder');
+    const mapOpenBtn = document.getElementById('contactMapOpenBtn');
     if(mapFrame){
       const mapUrl = data.contactMapEmbed || '';
       const hasMap = /^https?:\/\//.test(mapUrl);
-      if(hasMap){
+      const isShortAmap = /surl\.amap\.com/.test(mapUrl);
+      if(hasMap && !isShortAmap){
         mapFrame.src = mapUrl;
         mapFrame.style.display = 'block';
         if(mapPlaceholder) mapPlaceholder.style.display = 'none';
+        if(mapOpenBtn) mapOpenBtn.style.display = 'none';
+      }else if(hasMap && isShortAmap){
+        mapFrame.removeAttribute('src');
+        mapFrame.style.display = 'none';
+        if(mapPlaceholder){
+          mapPlaceholder.style.display = 'flex';
+          mapPlaceholder.textContent = '当前为高德分享短链，点击下方按钮打开地图';
+        }
+        if(mapOpenBtn){
+          mapOpenBtn.href = mapUrl;
+          mapOpenBtn.style.display = 'inline-block';
+        }
       }else{
         mapFrame.removeAttribute('src');
         mapFrame.style.display = 'none';
@@ -66,6 +80,7 @@ async function applyContent(){
           mapPlaceholder.style.display = 'flex';
           mapPlaceholder.textContent = data.contactMapTip || '请在后台设置地图链接（支持高德分享链接/iframe地址）';
         }
+        if(mapOpenBtn) mapOpenBtn.style.display = 'none';
       }
     }
 
