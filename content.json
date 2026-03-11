@@ -75,6 +75,10 @@
     "header:0>div:0>div:1>a:6": "联系我们",
     "header:0>div:0>div:1>a:0": "首页",
     "section:1>div:0>article:1>div:0>div:1>div:0>div:0>span:1": "高德地图导航",
-    "section:1>div:0>article:1>div:0>div:1>div:0>p:1": "请在后台设置地图链接"
+    "section:1>div:0>article:1>div:0>div:1>div:0>p:1": "请在后台设置地图链接",
+    "section:1>h2:0": "授权运营商：美的 COLMO 小天鹅",
+    "section:1>p:1": "平顶山华章商贸有限公司围绕美的、COLMO（科幕）、小天鹅三大体系，为家庭用户、门店渠道和工程客户提供系统化服务。",
+    "section:1>div:2>article:0>h3:0": "美的系工程配套",
+    "header:0>div:0>div:1>a:1": "智能场景"
   }
 }
