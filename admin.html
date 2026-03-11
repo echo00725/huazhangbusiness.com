@@ -1,5 +1,5 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>后台管理</title><link rel="stylesheet" href="/styles.css"/>
-<style>body{background:#f4f7fb}.wrap{max-width:1280px;margin:24px auto;padding:0 16px}.card{background:#fff;border:1px solid #e6ecf5;border-radius:12px;padding:16px;margin-bottom:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.input,textarea{width:100%;padding:10px;border:1px solid #d8e2ef;border-radius:8px}textarea{min-height:80px}.small{font-size:12px;color:#6b7280}.btn{border:0;background:#0d6efd;color:#fff;padding:9px 14px;border-radius:8px;cursor:pointer}.btn.gray{background:#64748b}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.news-item{border:1px dashed #c9d7ea;border-radius:10px;padding:12px;margin-top:10px}.preview{max-width:240px;max-height:120px;border-radius:8px;display:block;margin-top:8px}.layout{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}.live-box{position:sticky;top:12px}.live-frame{width:100%;height:620px;border:1px solid #d8e2ef;border-radius:10px;background:#fff}.map-list li{margin:6px 0}@media(max-width:980px){.layout{grid-template-columns:1fr}.live-frame{height:420px}}</style></head><body><div class="wrap">
+<style>body{background:#f4f7fb}.wrap{max-width:1280px;margin:24px auto;padding:0 16px}.card{background:#fff;border:1px solid #e6ecf5;border-radius:12px;padding:16px;margin-bottom:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.input,textarea{width:100%;padding:10px;border:1px solid #d8e2ef;border-radius:8px}textarea{min-height:80px}.small{font-size:12px;color:#6b7280}.btn{border:0;background:#0d6efd;color:#fff;padding:9px 14px;border-radius:8px;cursor:pointer}.btn.gray{background:#64748b}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.news-item{border:1px dashed #c9d7ea;border-radius:10px;padding:12px;margin-top:10px}.preview{max-width:240px;max-height:120px;border-radius:8px;display:block;margin-top:8px}.layout{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}.live-box{position:sticky;top:12px}.live-device{border:1px solid #d8e2ef;border-radius:14px;padding:8px;background:#f8fbff}.live-device.iphone{max-width:390px;margin:0 auto;border-radius:28px;padding:14px;box-shadow:0 12px 28px rgba(0,0,0,.12)}.live-frame{width:100%;height:620px;border:1px solid #d8e2ef;border-radius:10px;background:#fff}.live-device.iphone .live-frame{height:780px;border-radius:22px}.map-list li{margin:6px 0}@media(max-width:980px){.layout{grid-template-columns:1fr}.live-frame{height:420px}.live-device.iphone{max-width:100%;padding:8px;border-radius:14px}.live-device.iphone .live-frame{height:520px;border-radius:10px}}</style></head><body><div class="wrap">
 <h1>网站后台</h1><p class="small">已优化：固定内容不动。可编辑核心文案、SEO、背景图层、新闻列表与新闻详情。</p>
 <div class="card row"><button class="btn" onclick="saveAll()">保存全部</button><span id="msg"></span><span class="small">建议：改完一项就点保存，再看右侧实时预览</span></div>
 
@@ -42,10 +42,13 @@
       <button class="btn gray" onclick="setPreview('/about.html')">关于</button>
       <button class="btn gray" onclick="setPreview('/contact.html')">联系</button>
       <button class="btn" onclick="refreshPreview()">刷新预览</button>
+      <button class="btn gray" onclick="setDevice('desktop')">桌面预览</button>
+      <button class="btn gray" onclick="setDevice('iphone')">iPhone预览</button>
       <button class="btn gray" onclick="toggleInspector()" id="inspectorBtn">开启可视化编辑</button>
+      <button class="btn gray" onclick="toggleAutoSave()" id="autoSaveBtn">开启自动保存</button>
     </div>
     <input id="quickImagePicker" type="file" accept="image/*" style="display:none" onchange="quickPickImage(this)">
-    <iframe id="liveFrame" class="live-frame" src="/"></iframe>
+    <div id="liveDevice" class="live-device"><iframe id="liveFrame" class="live-frame" src="/"></iframe></div>
   </div>
 
   <div class="card">
@@ -71,8 +74,8 @@ const bgKeys=['bgPage','bgHomeHero','bgHomeSection','bgSceneHero','bgSceneFeatur
 const bgLabels={bgPage:'全站底图',bgHomeHero:'首页头图',bgHomeSection:'首页内容区背景',bgSceneHero:'智能场景头图',bgSceneFeatures:'智能场景功能区背景',bgIotHero:'IoT头图',bgIotCards:'IoT卡片区背景',bgNewsHero:'新闻头图',bgNewsList:'新闻列表区背景',bgAboutHero:'关于我们头图',bgAboutMain:'关于正文背景',bgContactHero:'联系我们头图',bgContactMain:'联系我们内容区背景'};
 function setVal(id,v=''){const el=document.getElementById(id);if(el)el.value=v}
 function getVal(id){const el=document.getElementById(id);return el?el.value:''}
-function fileToDataUrl(input,target){const f=input.files&&input.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{setVal(target,r.result); updatePreview(target); applyPreviewChange(target,r.result)}; r.readAsDataURL(f)}
-function quickPickImage(input){const f=input.files&&input.files[0]; if(!f||!imagePickerKey)return; const r=new FileReader(); r.onload=()=>{setVal(imagePickerKey,r.result); updatePreview(imagePickerKey); applyPreviewChange(imagePickerKey,r.result); document.getElementById('msg').textContent='🖼️ 已更新图片：'+imagePickerKey;}; r.readAsDataURL(f); input.value='';}
+function fileToDataUrl(input,target){const f=input.files&&input.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{setVal(target,r.result); updatePreview(target); applyPreviewChange(target,r.result); scheduleAutoSave();}; r.readAsDataURL(f)}
+function quickPickImage(input){const f=input.files&&input.files[0]; if(!f||!imagePickerKey)return; const r=new FileReader(); r.onload=()=>{setVal(imagePickerKey,r.result); updatePreview(imagePickerKey); applyPreviewChange(imagePickerKey,r.result); document.getElementById('msg').textContent='🖼️ 已更新图片：'+imagePickerKey; scheduleAutoSave();}; r.readAsDataURL(f); input.value='';}
 function updatePreview(k){const img=document.getElementById('pre_'+k); const v=getVal(k); if(img){img.src=v||''; img.style.display=v?'block':'none';}}
 function applyPreviewChange(key,val){
   const f=document.getElementById('liveFrame'); if(!f||!f.contentDocument)return;
@@ -88,12 +91,31 @@ function setPreview(path){const f=document.getElementById('liveFrame');if(f){f.s
 function refreshPreview(){const f=document.getElementById('liveFrame');if(!f)return;const u=new URL(f.src,location.origin);u.searchParams.set('_t',Date.now());f.src=u.pathname+u.search;setTimeout(bindPreviewInspector,500)}
 let inspectorOn=false;
 let imagePickerKey='';
+let autoSaveOn=false;
+let autoSaveTimer=null;
+function setDevice(mode){
+  const box=document.getElementById('liveDevice');
+  if(!box) return;
+  box.classList.toggle('iphone', mode==='iphone');
+  document.getElementById('msg').textContent=mode==='iphone'?'📱 已切换 iPhone 预览':'🖥️ 已切换桌面预览';
+}
 function toggleInspector(){
   inspectorOn=!inspectorOn;
   const b=document.getElementById('inspectorBtn');
   if(b)b.textContent=inspectorOn?'关闭可视化编辑':'开启可视化编辑';
-  document.getElementById('msg').textContent=inspectorOn?'✍️ 可视化编辑已开启：点文字可直接改，点图片可上传':'已关闭可视化编辑';
+  document.getElementById('msg').textContent=inspectorOn?'✍️ 可视化编辑已开启：文字可直接改；图片需点一下再上传':'已关闭可视化编辑';
   bindPreviewInspector();
+}
+function toggleAutoSave(){
+  autoSaveOn=!autoSaveOn;
+  const b=document.getElementById('autoSaveBtn');
+  if(b)b.textContent=autoSaveOn?'关闭自动保存':'开启自动保存';
+  document.getElementById('msg').textContent=autoSaveOn?'💾 自动保存已开启（停止输入约3秒自动保存）':'自动保存已关闭';
+}
+function scheduleAutoSave(){
+  if(!autoSaveOn) return;
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer=setTimeout(()=>saveAll(true),3000);
 }
 function focusField(key){
   const el=document.getElementById(key);
@@ -119,8 +141,9 @@ function bindPreviewInspector(){
     node.style.cursor=inspectorOn?'text':'';
     node.style.outline='';
     node.onfocus=()=>{ if(inspectorOn) node.style.outline='2px dashed #0d6efd'; if(k) focusField(k); };
-    node.onblur=()=>{ node.style.outline=''; if(inspectorOn&&k){ setVal(k,node.textContent.trim()); } };
-    node.oninput=()=>{ if(inspectorOn&&k){ setVal(k,node.textContent.trim()); } };
+    node.onblur=()=>{ node.style.outline=''; if(inspectorOn&&k){ setVal(k,node.textContent.trim()); scheduleAutoSave(); } };
+    node.oninput=()=>{ if(inspectorOn&&k){ setVal(k,node.textContent.trim()); scheduleAutoSave(); } };
+    node.onclick=(e)=>{ if(inspectorOn){ e.stopPropagation(); } };
   });
 
   doc.querySelectorAll('[data-key-src]').forEach(node=>{
@@ -130,6 +153,7 @@ function bindPreviewInspector(){
     node.onmouseleave=()=>{ node.style.outline=''; };
     node.onclick=(e)=>{
       if(!inspectorOn) return;
+      if((doc.getSelection&&doc.getSelection().toString()) || (doc.activeElement&&doc.activeElement.isContentEditable)) return;
       e.preventDefault(); e.stopPropagation();
       if(k){ focusField(k); pickImageForKey(k); }
     };
@@ -142,6 +166,7 @@ function bindPreviewInspector(){
     node.onmouseleave=()=>{ node.style.outline=''; };
     node.onclick=(e)=>{
       if(!inspectorOn) return;
+      if((doc.getSelection&&doc.getSelection().toString()) || (doc.activeElement&&doc.activeElement.isContentEditable)) return;
       e.preventDefault(); e.stopPropagation();
       if(k){ focusField(k); pickImageForKey(k); }
     };
@@ -154,7 +179,15 @@ function newsUpload(input,i){const f=input.files&&input.files[0];if(!f)return;co
 function renderNews(){const wrap=document.getElementById('newsWrap');const items=Array.isArray(data.newsItems)?data.newsItems:[];wrap.innerHTML=items.map((n,i)=>`<div class='news-item'><div class='row'><strong>新闻 #${i+1}</strong><button class='btn gray' onclick='delNews(${i})'>删除</button></div><label>标题</label><input class='input' id='n_title_${i}' value='${(n.title||'').replace(/'/g,'&#39;')}'><label>列表摘要</label><textarea id='n_text_${i}'>${n.text||''}</textarea><label>详情正文</label><textarea id='n_content_${i}'>${n.content||''}</textarea><label>信息（分类｜日期）</label><input class='input' id='n_meta_${i}' value='${(n.meta||'').replace(/'/g,'&#39;')}'><label>配图</label><input class='input' id='n_img_${i}' value='${(n.image||'').replace(/'/g,'&#39;')}' oninput='updateNewsPreview(${i})'><div class='row' style='margin-top:8px'><input type='file' accept='image/*' onchange='newsUpload(this,${i})'></div><img id='n_pre_${i}' class='preview' style='${n.image?'display:block':'display:none'}' src='${n.image||''}'></div>`).join('');}
 function addNews(){if(!Array.isArray(data.newsItems))data.newsItems=[];data.newsItems.push({title:'新新闻标题',text:'新闻摘要',content:'新闻详情内容',meta:'公司动态｜2026-03-10',image:''});renderNews();}
 function delNews(i){data.newsItems.splice(i,1);renderNews();}
-async function load(){data=await fetch('/api/content').then(r=>r.json());textKeys.forEach(k=>setVal(k,data[k]||''));updatePreview('contactWeChatQr');renderSeo();renderBg();renderNews();setTimeout(bindPreviewInspector,600);}
-async function saveAll(){textKeys.forEach(k=>data[k]=getVal(k));seoPages.forEach(p=>{data[`seo_${p}_title`]=getVal(`seo_${p}_title`);data[`seo_${p}_desc`]=getVal(`seo_${p}_desc`);});bgKeys.forEach(k=>data[k]=getVal(k));data.newsItems=(Array.isArray(data.newsItems)?data.newsItems:[]).map((_,i)=>({title:getVal('n_title_'+i),text:getVal('n_text_'+i),content:getVal('n_content_'+i),meta:getVal('n_meta_'+i),image:getVal('n_img_'+i)}));const payload={...data};const cachedPwd=localStorage.getItem('admin_pwd')||'';if(cachedPwd)payload.password=cachedPwd;let r=await fetch('/api/content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});let res=await r.json();if(r.status===401){const pwd=prompt('请输入后台保存密码');if(pwd){localStorage.setItem('admin_pwd',pwd);payload.password=pwd;r=await fetch('/api/content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});res=await r.json();}}document.getElementById('msg').textContent=res.ok?'✅ 保存成功':'❌ 保存失败：'+(res.error||'未知错误');}
+function bindAutoSaveInputs(){
+  document.addEventListener('input', (e)=>{
+    const t=e.target;
+    if(!t) return;
+    if(t.classList&&t.classList.contains('input')) scheduleAutoSave();
+    if(t.tagName==='TEXTAREA') scheduleAutoSave();
+  });
+}
+async function load(){data=await fetch('/api/content').then(r=>r.json());textKeys.forEach(k=>setVal(k,data[k]||''));updatePreview('contactWeChatQr');renderSeo();renderBg();renderNews();bindAutoSaveInputs();setTimeout(bindPreviewInspector,600);}
+async function saveAll(silent){textKeys.forEach(k=>data[k]=getVal(k));seoPages.forEach(p=>{data[`seo_${p}_title`]=getVal(`seo_${p}_title`);data[`seo_${p}_desc`]=getVal(`seo_${p}_desc`);});bgKeys.forEach(k=>data[k]=getVal(k));data.newsItems=(Array.isArray(data.newsItems)?data.newsItems:[]).map((_,i)=>({title:getVal('n_title_'+i),text:getVal('n_text_'+i),content:getVal('n_content_'+i),meta:getVal('n_meta_'+i),image:getVal('n_img_'+i)}));const payload={...data};const cachedPwd=localStorage.getItem('admin_pwd')||'';if(cachedPwd)payload.password=cachedPwd;let r=await fetch('/api/content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});let res=await r.json();if(r.status===401){const pwd=prompt('请输入后台保存密码');if(pwd){localStorage.setItem('admin_pwd',pwd);payload.password=pwd;r=await fetch('/api/content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});res=await r.json();}}document.getElementById('msg').textContent=res.ok?(silent?'✅ 已自动保存':'✅ 保存成功'):'❌ 保存失败：'+(res.error||'未知错误');}
 load();
 </script></body></html>
