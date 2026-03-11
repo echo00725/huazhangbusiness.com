@@ -42,8 +42,9 @@
       <button class="btn gray" onclick="setPreview('/about.html')">关于</button>
       <button class="btn gray" onclick="setPreview('/contact.html')">联系</button>
       <button class="btn" onclick="refreshPreview()">刷新预览</button>
-      <button class="btn gray" onclick="toggleInspector()" id="inspectorBtn">开启点选定位</button>
+      <button class="btn gray" onclick="toggleInspector()" id="inspectorBtn">开启可视化编辑</button>
     </div>
+    <input id="quickImagePicker" type="file" accept="image/*" style="display:none" onchange="quickPickImage(this)">
     <iframe id="liveFrame" class="live-frame" src="/"></iframe>
   </div>
 
@@ -70,13 +71,30 @@ const bgKeys=['bgPage','bgHomeHero','bgHomeSection','bgSceneHero','bgSceneFeatur
 const bgLabels={bgPage:'全站底图',bgHomeHero:'首页头图',bgHomeSection:'首页内容区背景',bgSceneHero:'智能场景头图',bgSceneFeatures:'智能场景功能区背景',bgIotHero:'IoT头图',bgIotCards:'IoT卡片区背景',bgNewsHero:'新闻头图',bgNewsList:'新闻列表区背景',bgAboutHero:'关于我们头图',bgAboutMain:'关于正文背景',bgContactHero:'联系我们头图',bgContactMain:'联系我们内容区背景'};
 function setVal(id,v=''){const el=document.getElementById(id);if(el)el.value=v}
 function getVal(id){const el=document.getElementById(id);return el?el.value:''}
-function fileToDataUrl(input,target){const f=input.files&&input.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{setVal(target,r.result); updatePreview(target)}; r.readAsDataURL(f)}
+function fileToDataUrl(input,target){const f=input.files&&input.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{setVal(target,r.result); updatePreview(target); applyPreviewChange(target,r.result)}; r.readAsDataURL(f)}
+function quickPickImage(input){const f=input.files&&input.files[0]; if(!f||!imagePickerKey)return; const r=new FileReader(); r.onload=()=>{setVal(imagePickerKey,r.result); updatePreview(imagePickerKey); applyPreviewChange(imagePickerKey,r.result); document.getElementById('msg').textContent='🖼️ 已更新图片：'+imagePickerKey;}; r.readAsDataURL(f); input.value='';}
 function updatePreview(k){const img=document.getElementById('pre_'+k); const v=getVal(k); if(img){img.src=v||''; img.style.display=v?'block':'none';}}
+function applyPreviewChange(key,val){
+  const f=document.getElementById('liveFrame'); if(!f||!f.contentDocument)return;
+  const doc=f.contentDocument;
+  doc.querySelectorAll(`[data-key-src="${key}"]`).forEach(el=>el.src=val||'');
+  doc.querySelectorAll(`[data-bg-key="${key}"]`).forEach(el=>{
+    if(val) el.style.backgroundImage=`linear-gradient(rgba(10,56,136,.56),rgba(10,56,136,.62)),url(${val})`;
+    else el.style.backgroundImage='';
+  });
+}
 function clearBg(k){setVal(k,'');updatePreview(k)}
 function setPreview(path){const f=document.getElementById('liveFrame');if(f){f.src=path||'/';setTimeout(bindPreviewInspector,500)}}
 function refreshPreview(){const f=document.getElementById('liveFrame');if(!f)return;const u=new URL(f.src,location.origin);u.searchParams.set('_t',Date.now());f.src=u.pathname+u.search;setTimeout(bindPreviewInspector,500)}
 let inspectorOn=false;
-function toggleInspector(){inspectorOn=!inspectorOn;const b=document.getElementById('inspectorBtn');if(b)b.textContent=inspectorOn?'关闭点选定位':'开启点选定位';bindPreviewInspector();}
+let imagePickerKey='';
+function toggleInspector(){
+  inspectorOn=!inspectorOn;
+  const b=document.getElementById('inspectorBtn');
+  if(b)b.textContent=inspectorOn?'关闭可视化编辑':'开启可视化编辑';
+  document.getElementById('msg').textContent=inspectorOn?'✍️ 可视化编辑已开启：点文字可直接改，点图片可上传':'已关闭可视化编辑';
+  bindPreviewInspector();
+}
 function focusField(key){
   const el=document.getElementById(key);
   if(!el){document.getElementById('msg').textContent='⚠️ 当前点选区域暂无对应字段：'+key;return;}
@@ -84,17 +102,49 @@ function focusField(key){
   el.focus();
   el.style.boxShadow='0 0 0 3px rgba(13,110,253,.25)';
   setTimeout(()=>el.style.boxShadow='',1200);
-  document.getElementById('msg').textContent='🎯 已定位字段：'+key;
+}
+function pickImageForKey(key){
+  imagePickerKey=key;
+  const p=document.getElementById('quickImagePicker');
+  if(p)p.click();
 }
 function bindPreviewInspector(){
   const f=document.getElementById('liveFrame');
   if(!f || !f.contentDocument) return;
   const doc=f.contentDocument;
+
   doc.querySelectorAll('[data-key]').forEach(node=>{
-    node.style.cursor=inspectorOn?'crosshair':'';
-    node.onmouseenter=()=>{if(inspectorOn)node.style.outline='2px dashed #0d6efd'};
-    node.onmouseleave=()=>{node.style.outline=''};
-    node.onclick=(e)=>{if(!inspectorOn)return; e.preventDefault(); e.stopPropagation(); const k=node.getAttribute('data-key'); if(k)focusField(k);};
+    const k=node.getAttribute('data-key');
+    node.contentEditable=inspectorOn?'true':'false';
+    node.style.cursor=inspectorOn?'text':'';
+    node.style.outline='';
+    node.onfocus=()=>{ if(inspectorOn) node.style.outline='2px dashed #0d6efd'; if(k) focusField(k); };
+    node.onblur=()=>{ node.style.outline=''; if(inspectorOn&&k){ setVal(k,node.textContent.trim()); } };
+    node.oninput=()=>{ if(inspectorOn&&k){ setVal(k,node.textContent.trim()); } };
+  });
+
+  doc.querySelectorAll('[data-key-src]').forEach(node=>{
+    const k=node.getAttribute('data-key-src');
+    node.style.cursor=inspectorOn?'pointer':'';
+    node.onmouseenter=()=>{ if(inspectorOn) node.style.outline='2px dashed #16a34a'; };
+    node.onmouseleave=()=>{ node.style.outline=''; };
+    node.onclick=(e)=>{
+      if(!inspectorOn) return;
+      e.preventDefault(); e.stopPropagation();
+      if(k){ focusField(k); pickImageForKey(k); }
+    };
+  });
+
+  doc.querySelectorAll('[data-bg-key]').forEach(node=>{
+    const k=node.getAttribute('data-bg-key');
+    node.style.cursor=inspectorOn?'pointer':'';
+    node.onmouseenter=()=>{ if(inspectorOn) node.style.outline='2px dashed #f59e0b'; };
+    node.onmouseleave=()=>{ node.style.outline=''; };
+    node.onclick=(e)=>{
+      if(!inspectorOn) return;
+      e.preventDefault(); e.stopPropagation();
+      if(k){ focusField(k); pickImageForKey(k); }
+    };
   });
 }
 function renderBg(){const root=document.getElementById('bgFields');root.innerHTML=bgKeys.map(k=>`<div class='news-item'><label>${bgLabels[k]||k}</label><input id='${k}' class='input' placeholder='URL或上传'><div class='row' style='margin-top:8px'><input type='file' accept='image/*' onchange='fileToDataUrl(this,"${k}")'><button class='btn gray' onclick='clearBg("${k}")'>清空</button></div><img id='pre_${k}' class='preview' /></div>`).join('');bgKeys.forEach(k=>{setVal(k,data[k]||'');updatePreview(k);});}
