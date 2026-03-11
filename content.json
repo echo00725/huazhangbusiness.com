@@ -69,5 +69,9 @@
       "meta": "活动资讯｜2026-03-10",
       "image": ""
     }
-  ]
+  ],
+  "customText": {
+    "section:1>h2:0": "授权运营商：美的 COLMO 小天鹅",
+    "section:2>div:0>h2:0": "核心能力矩阵"
+  }
 }
