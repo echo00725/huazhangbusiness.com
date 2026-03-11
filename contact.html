@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="description" content="联系我们"/>
+  <title>联系我们</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body data-page="contact">
+<header class="header" data-bg-key="bgContactHero">
+  <div class="container nav">
+    <div class="logo" data-key="logoText"></div>
+    <div class="nav-links">
+      <a href="/">首页</a><a href="/scene.html">智能场景</a><a href="/iot.html">IoT技术</a><a href="/security.html">安全与合规</a><a href="/news.html">新闻中心</a><a href="/about.html">关于我们</a><a class="active" href="/contact.html">联系我们</a>
+    </div>
+  </div>
+  <div class="container hero"><h1 data-key="contactTitle"></h1></div>
+</header>
+
+<section class="section container" data-bg-key="bgContactMain">
+  <div class="cards two">
+    <article class="card">
+      <h3>服务热线</h3><p data-key="contactHotline"></p>
+      <h3 style="margin-top:14px">地址</h3><p data-key="contactAddress"></p>
+      <h3 style="margin-top:14px">联系人</h3><p data-key="contactPerson"></p>
+      <h3 style="margin-top:14px">邮箱</h3><p data-key="contactEmail"></p>
+    </article>
+    <article class="card contact-right">
+      <div class="map-box">地图展示区（后续可接入高德/百度地图）</div>
+      <div class="wechat-box">
+        <h3>微信咨询</h3>
+        <p data-key="contactWeChatNote">微信扫码可快速进入咨询</p>
+        <div id="wechatQrPlaceholder" class="qr-placeholder">请在后台上传微信二维码</div>
+        <img class="wechat-qr" data-key-src="contactWeChatQr" alt="微信二维码"/>
+      </div>
+    </article>
+  </div>
+</section>
+
+<footer class="footer"><div class="container footer-bottom">© <span id="year"></span> 平顶山华章商贸有限公司 版权所有</div></footer>
+<script src="/app.js"></script>
+</body>
+</html>

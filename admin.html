@@ -1,0 +1,44 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>后台管理</title><link rel="stylesheet" href="/styles.css"/>
+<style>body{background:#f4f7fb}.wrap{max-width:1100px;margin:24px auto;padding:0 16px}.card{background:#fff;border:1px solid #e6ecf5;border-radius:12px;padding:16px;margin-bottom:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.input,textarea{width:100%;padding:10px;border:1px solid #d8e2ef;border-radius:8px}textarea{min-height:80px}.small{font-size:12px;color:#6b7280}.btn{border:0;background:#0d6efd;color:#fff;padding:9px 14px;border-radius:8px;cursor:pointer}.btn.gray{background:#64748b}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.news-item{border:1px dashed #c9d7ea;border-radius:10px;padding:12px;margin-top:10px}.preview{max-width:240px;max-height:120px;border-radius:8px;display:block;margin-top:8px}</style></head><body><div class="wrap">
+<h1>网站后台</h1><p class="small">已优化：固定内容不动。可编辑核心文案、SEO、背景图层、新闻列表与新闻详情。</p>
+<div class="card row"><button class="btn" onclick="saveAll()">保存全部</button><span id="msg"></span></div>
+
+<div class="card"><h3>基础信息</h3><div class="grid"><div><label>网站标题</label><input id="siteTitle" class="input"></div><div><label>LOGO文字</label><input id="logoText" class="input"></div></div></div>
+
+<div class="card"><h3>SEO（每页标题/描述）</h3><div class="grid" id="seoGrid"></div></div>
+
+<div class="card"><h3>核心文案</h3><div class="grid">
+<div><label>首页主标题</label><input id="homeHeroTitle" class="input"></div><div><label>首页主描述</label><input id="homeHeroDesc" class="input"></div>
+<div><label>场景标题</label><input id="sceneTitle" class="input"></div><div><label>场景描述</label><input id="sceneDesc" class="input"></div>
+<div><label>IoT标题</label><input id="iotTitle" class="input"></div><div><label>IoT描述</label><input id="iotDesc" class="input"></div>
+<div><label>关于标题</label><input id="aboutTitle" class="input"></div><div><label>关于导语</label><input id="aboutLead" class="input"></div>
+<div><label>联系方式-热线</label><input id="contactHotline" class="input"></div><div><label>联系方式-地址</label><input id="contactAddress" class="input"></div>
+<div><label>联系方式-联系人</label><input id="contactPerson" class="input"></div><div><label>联系方式-邮箱</label><input id="contactEmail" class="input"></div>
+<div><label>联系方式-微信二维码（URL/Base64）</label><input id="contactWeChatQr" class="input"></div><div><label>微信二维码说明</label><input id="contactWeChatNote" class="input" placeholder="例如：微信扫码可快速进入咨询"></div>
+</div></div>
+
+<div class="card"><h3>背景图层上传</h3><p class="small">可传不同页面/区块背景，不同图层独立设置。</p><div id="bgFields"></div></div>
+<div class="card"><h3>新闻管理（可新增/删除，含详情内容）</h3><div id="newsWrap"></div><div class="row" style="margin-top:10px"><button class="btn gray" onclick="addNews()">+ 新增新闻</button></div></div>
+</div>
+<script>
+let data={};
+const textKeys=['siteTitle','logoText','homeHeroTitle','homeHeroDesc','sceneTitle','sceneDesc','iotTitle','iotDesc','aboutTitle','aboutLead','contactHotline','contactAddress','contactPerson','contactEmail','contactWeChatQr','contactWeChatNote'];
+const seoPages=['home','scene','iot','security','news','about','contact'];
+const bgKeys=['bgPage','bgHomeHero','bgHomeSection','bgSceneHero','bgSceneFeatures','bgIotHero','bgIotCards','bgNewsHero','bgNewsList','bgAboutHero','bgAboutMain','bgContactHero','bgContactMain'];
+const bgLabels={bgPage:'全站底图',bgHomeHero:'首页头图',bgHomeSection:'首页内容区背景',bgSceneHero:'智能场景头图',bgSceneFeatures:'智能场景功能区背景',bgIotHero:'IoT头图',bgIotCards:'IoT卡片区背景',bgNewsHero:'新闻头图',bgNewsList:'新闻列表区背景',bgAboutHero:'关于我们头图',bgAboutMain:'关于正文背景',bgContactHero:'联系我们头图',bgContactMain:'联系我们内容区背景'};
+function setVal(id,v=''){const el=document.getElementById(id);if(el)el.value=v}
+function getVal(id){const el=document.getElementById(id);return el?el.value:''}
+function fileToDataUrl(input,target){const f=input.files&&input.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{setVal(target,r.result); updatePreview(target)}; r.readAsDataURL(f)}
+function updatePreview(k){const img=document.getElementById('pre_'+k); const v=getVal(k); if(img){img.src=v||''; img.style.display=v?'block':'none';}}
+function clearBg(k){setVal(k,'');updatePreview(k)}
+function renderBg(){const root=document.getElementById('bgFields');root.innerHTML=bgKeys.map(k=>`<div class='news-item'><label>${bgLabels[k]||k}</label><input id='${k}' class='input' placeholder='URL或上传'><div class='row' style='margin-top:8px'><input type='file' accept='image/*' onchange='fileToDataUrl(this,"${k}")'><button class='btn gray' onclick='clearBg("${k}")'>清空</button></div><img id='pre_${k}' class='preview' /></div>`).join('');bgKeys.forEach(k=>{setVal(k,data[k]||'');updatePreview(k);});}
+function renderSeo(){const g=document.getElementById('seoGrid');g.innerHTML=seoPages.map(p=>`<div class='news-item'><label>${p} 页标题</label><input id='seo_${p}_title' class='input'><label>描述</label><textarea id='seo_${p}_desc'></textarea></div>`).join('');seoPages.forEach(p=>{setVal(`seo_${p}_title`,data[`seo_${p}_title`]||'');setVal(`seo_${p}_desc`,data[`seo_${p}_desc`]||'');});}
+function updateNewsPreview(i){const v=getVal('n_img_'+i);const img=document.getElementById('n_pre_'+i);img.src=v||'';img.style.display=v?'block':'none'}
+function newsUpload(input,i){const f=input.files&&input.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{setVal('n_img_'+i,r.result);updateNewsPreview(i)};r.readAsDataURL(f)}
+function renderNews(){const wrap=document.getElementById('newsWrap');const items=Array.isArray(data.newsItems)?data.newsItems:[];wrap.innerHTML=items.map((n,i)=>`<div class='news-item'><div class='row'><strong>新闻 #${i+1}</strong><button class='btn gray' onclick='delNews(${i})'>删除</button></div><label>标题</label><input class='input' id='n_title_${i}' value='${(n.title||'').replace(/'/g,'&#39;')}'><label>列表摘要</label><textarea id='n_text_${i}'>${n.text||''}</textarea><label>详情正文</label><textarea id='n_content_${i}'>${n.content||''}</textarea><label>信息（分类｜日期）</label><input class='input' id='n_meta_${i}' value='${(n.meta||'').replace(/'/g,'&#39;')}'><label>配图</label><input class='input' id='n_img_${i}' value='${(n.image||'').replace(/'/g,'&#39;')}' oninput='updateNewsPreview(${i})'><div class='row' style='margin-top:8px'><input type='file' accept='image/*' onchange='newsUpload(this,${i})'></div><img id='n_pre_${i}' class='preview' style='${n.image?'display:block':'display:none'}' src='${n.image||''}'></div>`).join('');}
+function addNews(){if(!Array.isArray(data.newsItems))data.newsItems=[];data.newsItems.push({title:'新新闻标题',text:'新闻摘要',content:'新闻详情内容',meta:'公司动态｜2026-03-10',image:''});renderNews();}
+function delNews(i){data.newsItems.splice(i,1);renderNews();}
+async function load(){data=await fetch('/api/content').then(r=>r.json());textKeys.forEach(k=>setVal(k,data[k]||''));renderSeo();renderBg();renderNews();}
+async function saveAll(){textKeys.forEach(k=>data[k]=getVal(k));seoPages.forEach(p=>{data[`seo_${p}_title`]=getVal(`seo_${p}_title`);data[`seo_${p}_desc`]=getVal(`seo_${p}_desc`);});bgKeys.forEach(k=>data[k]=getVal(k));data.newsItems=(Array.isArray(data.newsItems)?data.newsItems:[]).map((_,i)=>({title:getVal('n_title_'+i),text:getVal('n_text_'+i),content:getVal('n_content_'+i),meta:getVal('n_meta_'+i),image:getVal('n_img_'+i)}));const res=await fetch('/api/content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json());document.getElementById('msg').textContent=res.ok?'✅ 保存成功':'❌ 保存失败';}
+load();
+</script></body></html>
