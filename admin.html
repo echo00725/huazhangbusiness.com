@@ -23,17 +23,22 @@
     <button class="btn" onclick="saveAll(false)">保存</button>
     <button class="btn gray" onclick="toggleAutoSave()" id="autoBtn">自动保存：开</button>
     <button class="btn gray" onclick="openMapSettings()">地图设置</button>
-    <button class="btn gray" onclick="clearCurrentImage()">清除当前图片</button>
     <input id="pick" type="file" accept="image/*" style="display:none" onchange="pickImage(this)">
-    <span id="msg" class="msg">直接在预览里点文字编辑；点图片/背景可上传替换</span>
+    <span id="msg" class="msg">直接点文字编辑；图片区域有“上传/清除”按钮</span>
   </div>
   <iframe id="live" src="/"></iframe>
 
 <script>
 let data={};
 let autoSave=true;
-let t=null;
+let timer=null;
 let imageKey='';
+
+function setMsg(s){ document.getElementById('msg').textContent=s; }
+function toggleAutoSave(){ autoSave=!autoSave; document.getElementById('autoBtn').textContent='自动保存：'+(autoSave?'开':'关'); setMsg(autoSave?'自动保存已开启（停3秒保存）':'自动保存已关闭'); }
+function debounceSave(){ if(!autoSave) return; clearTimeout(timer); timer=setTimeout(()=>saveAll(true),3000); }
+function openPage(path){ document.getElementById('live').src=(path||'/')+'?_v='+Date.now(); }
+
 function stableId(el,doc){
   const parts=[]; let cur=el;
   while(cur && cur!==doc.body){
@@ -45,110 +50,108 @@ function stableId(el,doc){
   return parts.join('>');
 }
 
-async function loadData(){ data = await fetch('/api/content').then(r=>r.json()); }
-function setMsg(s){ document.getElementById('msg').textContent=s; }
-function toggleAutoSave(){ autoSave=!autoSave; document.getElementById('autoBtn').textContent='自动保存：'+(autoSave?'开':'关'); setMsg(autoSave?'自动保存已开启（停3秒保存）':'自动保存已关闭'); }
-function debounceSave(){ if(!autoSave) return; clearTimeout(t); t=setTimeout(()=>saveAll(true),3000); }
-function clearCurrentImage(){
-  if(!imageKey){ setMsg('先点击一个图片区域，再点“清除当前图片”'); return; }
-  data[imageKey]='';
-  const doc=document.getElementById('live').contentDocument;
-  if(doc){
-    doc.querySelectorAll(`[data-key-src="${imageKey}"]`).forEach(el=>{el.removeAttribute('src'); el.style.display='none';});
-    doc.querySelectorAll(`[data-bg-key="${imageKey}"]`).forEach(el=>el.style.backgroundImage='');
-  }
-  setMsg('已清除图片：'+imageKey);
-  debounceSave();
-}
-function openMapSettings(){
-  const embed=prompt('请输入地图链接（高德分享链接或iframe地址）', data.contactMapEmbed||'') ?? data.contactMapEmbed || '';
-  const tip=prompt('无地图时提示文案', data.contactMapTip||'请在后台设置地图链接（支持高德分享链接/iframe地址）') ?? data.contactMapTip || '';
-  data.contactMapEmbed=embed.trim();
-  data.contactMapTip=tip.trim();
-  const doc=document.getElementById('live').contentDocument;
-  if(doc){
-    const frame=doc.getElementById('contactMapFrame');
-    const ph=doc.getElementById('contactMapPlaceholder');
-    if(frame){
-      const ok=/^https?:\/\//.test(data.contactMapEmbed||'');
-      if(ok){frame.src=data.contactMapEmbed; frame.style.display='block'; if(ph) ph.style.display='none';}
-      else {frame.removeAttribute('src'); frame.style.display='none'; if(ph){ph.style.display='flex'; ph.textContent=data.contactMapTip||'请在后台设置地图链接（支持高德分享链接/iframe地址）';}}
-    }
-  }
-  setMsg('地图设置已更新，记得保存');
-  debounceSave();
+function addImagePanel(doc,host,key,label){
+  if(!host || host.dataset.ocPanel==='1') return;
+  host.dataset.ocPanel='1';
+  if(getComputedStyle(host).position==='static') host.style.position='relative';
+
+  const box=doc.createElement('div');
+  box.style.cssText='position:absolute;right:8px;top:8px;z-index:9999;display:flex;gap:6px';
+
+  const up=doc.createElement('button');
+  up.type='button';
+  up.textContent=label || '请上传该区域图片';
+  up.style.cssText='border:0;border-radius:6px;padding:4px 8px;font-size:12px;background:rgba(22,163,74,.92);color:#fff;cursor:pointer';
+  up.onclick=(e)=>{e.preventDefault();e.stopPropagation();imageKey=key;document.getElementById('pick').click();setMsg('选择图片：'+key);};
+
+  const del=doc.createElement('button');
+  del.type='button';
+  del.textContent='清除图片';
+  del.style.cssText='border:0;border-radius:6px;padding:4px 8px;font-size:12px;background:rgba(239,68,68,.92);color:#fff;cursor:pointer';
+  del.onclick=(e)=>{e.preventDefault();e.stopPropagation();clearImageByKey(key);};
+
+  box.appendChild(up); box.appendChild(del); host.appendChild(box);
 }
 
-function openPage(path){ const f=document.getElementById('live'); f.src=(path||'/')+'?_v='+Date.now(); }
-
-function attachUploadHint(doc,el,key,label){
-  if(!el || el.dataset.ocHintBound==='1') return;
-  el.dataset.ocHintBound='1';
-  if(getComputedStyle(el).position==='static') el.style.position='relative';
-  const hint=doc.createElement('button');
-  hint.type='button';
-  hint.textContent=label||'请上传该区域图片';
-  hint.style.cssText='position:absolute;right:8px;top:8px;z-index:9999;border:0;border-radius:6px;padding:4px 8px;font-size:12px;background:rgba(22,163,74,.92);color:#fff;cursor:pointer';
-  hint.onclick=(e)=>{e.preventDefault();e.stopPropagation();imageKey=key;document.getElementById('pick').click();setMsg('选择图片上传：'+key);};
-  el.appendChild(hint);
+function clearImageByKey(key){
+  data[key]='';
+  const doc=document.getElementById('live').contentDocument;
+  if(doc){
+    doc.querySelectorAll(`[data-key-src="${key}"]`).forEach(el=>{el.removeAttribute('src');el.style.display='none';});
+    doc.querySelectorAll(`[data-bg-key="${key}"]`).forEach(el=>el.style.backgroundImage='');
+    const ph=doc.getElementById('wechatQrPlaceholder'); if(ph && key==='contactWeChatQr') ph.style.display='flex';
+  }
+  setMsg('已清除：'+key);
+  debounceSave();
 }
 
 function bindEditable(){
-  const f=document.getElementById('live');
-  const doc=f.contentDocument;
+  const doc=document.getElementById('live').contentDocument;
   if(!doc) return;
-
-  // 所有文字可直接改（不限 data-key）
   if(!data.customText) data.customText={};
-  const textSel='h1,h2,h3,h4,h5,h6,p,a,li,span,button,label,strong,em,b,small';
+
+  // 禁止链接跳转，避免误触
+  doc.querySelectorAll('a').forEach(a=>a.onclick=(e)=>e.preventDefault());
+
+  // 文字：只让“叶子文本节点”可编辑
+  const textSel='h1,h2,h3,h4,h5,h6,p,span,li,a,label,strong,em,b,small,button';
   doc.querySelectorAll(textSel).forEach(el=>{
     if(el.closest('script,style')) return;
-    if(el.querySelector('img,input,textarea,iframe,svg')) return;
+    if(el.children.length>0) return;
+    const txt=(el.textContent||'').trim();
+    if(!txt) return;
     const id=stableId(el,doc);
     if(data.customText[id]!==undefined) el.textContent=data.customText[id];
     el.contentEditable='true';
-    el.style.outline='none';
     el.style.cursor='text';
-    el.onclick=(e)=>{e.stopPropagation();};
-    el.onfocus=()=>{el.style.outline='2px dashed #2563eb'; setMsg('正在编辑文字（可直接输入）');};
-    el.onblur=()=>{el.style.outline='none'; data.customText[id]=el.textContent.trim(); debounceSave();};
+    el.onfocus=()=>{el.style.outline='2px dashed #2563eb'; setMsg('正在编辑文字…');};
+    el.onblur=()=>{el.style.outline=''; data.customText[id]=el.textContent.trim(); debounceSave();};
     el.oninput=()=>{data.customText[id]=el.textContent.trim(); debounceSave();};
+    el.onclick=(e)=>e.stopPropagation();
   });
 
-  // 图片：仅点“上传提示”触发上传，不再抢文字点击
+  // 图片区域
   doc.querySelectorAll('[data-key-src]').forEach(el=>{
-    const k=el.getAttribute('data-key-src');
+    const key=el.getAttribute('data-key-src');
     el.style.outline='2px dashed rgba(22,163,74,.45)';
-    el.style.outlineOffset='2px';
-    const wrap=el.parentElement;
-    if(wrap) attachUploadHint(doc,wrap,k,'请上传该图片');
+    addImagePanel(doc, el.parentElement || el, key, '请上传该图片');
   });
 
-  // 背景：仅点“上传提示”触发上传
+  // 背景区域
   doc.querySelectorAll('[data-bg-key]').forEach(el=>{
-    const k=el.getAttribute('data-bg-key');
-    el.style.outline='2px dashed rgba(245,158,11,.4)';
-    el.style.outlineOffset='-2px';
-    attachUploadHint(doc,el,k,'请上传该区域图片');
+    const key=el.getAttribute('data-bg-key');
+    el.style.outline='2px dashed rgba(245,158,11,.45)';
+    addImagePanel(doc, el, key, '请上传该区域图片');
   });
 }
 
 function pickImage(input){
-  const f=input.files && input.files[0]; if(!f || !imageKey) return;
+  const f=input.files&&input.files[0]; if(!f||!imageKey) return;
   const r=new FileReader();
   r.onload=()=>{
     data[imageKey]=r.result;
     const doc=document.getElementById('live').contentDocument;
     if(doc){
-      doc.querySelectorAll(`[data-key-src="${imageKey}"]`).forEach(el=>el.src=r.result);
+      doc.querySelectorAll(`[data-key-src="${imageKey}"]`).forEach(el=>{el.src=r.result;el.style.display='block';});
       doc.querySelectorAll(`[data-bg-key="${imageKey}"]`).forEach(el=>el.style.backgroundImage=`linear-gradient(rgba(10,56,136,.56),rgba(10,56,136,.62)),url(${r.result})`);
+      const ph=doc.getElementById('wechatQrPlaceholder'); if(ph && imageKey==='contactWeChatQr') ph.style.display='none';
     }
-    setMsg('已替换图片：'+imageKey);
+    setMsg('已更新图片：'+imageKey);
     debounceSave();
   };
-  r.readAsDataURL(f);
-  input.value='';
+  r.readAsDataURL(f); input.value='';
 }
+
+function openMapSettings(){
+  const embed=prompt('请输入地图链接（高德分享链接/iframe地址）', data.contactMapEmbed||'') ?? data.contactMapEmbed || '';
+  const tip=prompt('无地图时提示文案', data.contactMapTip||'请在后台设置地图链接（支持高德分享链接/iframe地址）') ?? data.contactMapTip || '';
+  data.contactMapEmbed=embed.trim();
+  data.contactMapTip=tip.trim();
+  setMsg('地图设置已更新');
+  debounceSave();
+}
+
+async function loadData(){ data = await fetch('/api/content').then(r=>r.json()); }
 
 async function saveAll(silent){
   const payload={...data};
@@ -166,7 +169,7 @@ async function saveAll(silent){
 (async function init(){
   await loadData();
   const f=document.getElementById('live');
-  f.addEventListener('load',()=>setTimeout(bindEditable,250));
+  f.addEventListener('load',()=>setTimeout(bindEditable,220));
   openPage('/');
 })();
 </script>
