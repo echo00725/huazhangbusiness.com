@@ -67,7 +67,8 @@ async function applyContent(){
         mapFrame.style.display = 'none';
         if(mapPlaceholder){
           mapPlaceholder.style.display = 'flex';
-          mapPlaceholder.textContent = '当前为高德分享短链，点击下方按钮打开地图';
+          const tipEl = mapPlaceholder.querySelector('p');
+          if(tipEl) tipEl.textContent = '当前为高德分享短链，点击下方按钮打开地图';
         }
         if(mapOpenBtn){
           mapOpenBtn.href = mapUrl;
@@ -78,7 +79,8 @@ async function applyContent(){
         mapFrame.style.display = 'none';
         if(mapPlaceholder){
           mapPlaceholder.style.display = 'flex';
-          mapPlaceholder.textContent = data.contactMapTip || '请在后台设置地图链接（支持高德分享链接/iframe地址）';
+          const tipEl = mapPlaceholder.querySelector('p');
+          if(tipEl) tipEl.textContent = data.contactMapTip || '请在后台设置地图链接（支持高德分享链接/iframe地址）';
         }
         if(mapOpenBtn) mapOpenBtn.style.display = 'none';
       }
