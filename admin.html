@@ -14,7 +14,16 @@
 <div><label>关于标题</label><input id="aboutTitle" class="input"></div><div><label>关于导语</label><input id="aboutLead" class="input"></div>
 <div><label>联系方式-热线</label><input id="contactHotline" class="input"></div><div><label>联系方式-地址</label><input id="contactAddress" class="input"></div>
 <div><label>联系方式-联系人</label><input id="contactPerson" class="input"></div><div><label>联系方式-邮箱</label><input id="contactEmail" class="input"></div>
-<div><label>联系方式-微信二维码（URL/Base64）</label><input id="contactWeChatQr" class="input"></div><div><label>微信二维码说明</label><input id="contactWeChatNote" class="input" placeholder="例如：微信扫码可快速进入咨询"></div>
+<div>
+  <label>联系方式-微信二维码（URL/Base64）</label>
+  <input id="contactWeChatQr" class="input">
+  <div class="row" style="margin-top:8px">
+    <input type="file" accept="image/*" onchange="fileToDataUrl(this,'contactWeChatQr')">
+    <button class="btn gray" onclick="clearBg('contactWeChatQr')">清空二维码</button>
+  </div>
+  <img id="pre_contactWeChatQr" class="preview" />
+</div>
+<div><label>微信二维码说明</label><input id="contactWeChatNote" class="input" placeholder="例如：微信扫码可快速进入咨询"></div>
 </div></div>
 
 <div class="card"><h3>背景图层上传</h3><p class="small">可传不同页面/区块背景，不同图层独立设置。</p><div id="bgFields"></div></div>
@@ -38,7 +47,7 @@ function newsUpload(input,i){const f=input.files&&input.files[0];if(!f)return;co
 function renderNews(){const wrap=document.getElementById('newsWrap');const items=Array.isArray(data.newsItems)?data.newsItems:[];wrap.innerHTML=items.map((n,i)=>`<div class='news-item'><div class='row'><strong>新闻 #${i+1}</strong><button class='btn gray' onclick='delNews(${i})'>删除</button></div><label>标题</label><input class='input' id='n_title_${i}' value='${(n.title||'').replace(/'/g,'&#39;')}'><label>列表摘要</label><textarea id='n_text_${i}'>${n.text||''}</textarea><label>详情正文</label><textarea id='n_content_${i}'>${n.content||''}</textarea><label>信息（分类｜日期）</label><input class='input' id='n_meta_${i}' value='${(n.meta||'').replace(/'/g,'&#39;')}'><label>配图</label><input class='input' id='n_img_${i}' value='${(n.image||'').replace(/'/g,'&#39;')}' oninput='updateNewsPreview(${i})'><div class='row' style='margin-top:8px'><input type='file' accept='image/*' onchange='newsUpload(this,${i})'></div><img id='n_pre_${i}' class='preview' style='${n.image?'display:block':'display:none'}' src='${n.image||''}'></div>`).join('');}
 function addNews(){if(!Array.isArray(data.newsItems))data.newsItems=[];data.newsItems.push({title:'新新闻标题',text:'新闻摘要',content:'新闻详情内容',meta:'公司动态｜2026-03-10',image:''});renderNews();}
 function delNews(i){data.newsItems.splice(i,1);renderNews();}
-async function load(){data=await fetch('/api/content').then(r=>r.json());textKeys.forEach(k=>setVal(k,data[k]||''));renderSeo();renderBg();renderNews();}
+async function load(){data=await fetch('/api/content').then(r=>r.json());textKeys.forEach(k=>setVal(k,data[k]||''));updatePreview('contactWeChatQr');renderSeo();renderBg();renderNews();}
 async function saveAll(){textKeys.forEach(k=>data[k]=getVal(k));seoPages.forEach(p=>{data[`seo_${p}_title`]=getVal(`seo_${p}_title`);data[`seo_${p}_desc`]=getVal(`seo_${p}_desc`);});bgKeys.forEach(k=>data[k]=getVal(k));data.newsItems=(Array.isArray(data.newsItems)?data.newsItems:[]).map((_,i)=>({title:getVal('n_title_'+i),text:getVal('n_text_'+i),content:getVal('n_content_'+i),meta:getVal('n_meta_'+i),image:getVal('n_img_'+i)}));const payload={...data};const cachedPwd=localStorage.getItem('admin_pwd')||'';if(cachedPwd)payload.password=cachedPwd;let r=await fetch('/api/content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});let res=await r.json();if(r.status===401){const pwd=prompt('请输入后台保存密码');if(pwd){localStorage.setItem('admin_pwd',pwd);payload.password=pwd;r=await fetch('/api/content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});res=await r.json();}}document.getElementById('msg').textContent=res.ok?'✅ 保存成功':'❌ 保存失败：'+(res.error||'未知错误');}
 load();
 </script></body></html>
