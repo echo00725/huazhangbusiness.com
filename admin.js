@@ -30,7 +30,11 @@ function bindEditable(){
   const d=$('#live').contentDocument; if(!d) return;
   if(!data.customText) data.customText={};
 
-  d.addEventListener('click',e=>{ const a=e.target?.closest?.('a'); if(a){e.preventDefault();e.stopPropagation();}}, true);
+  d.addEventListener('click',function(e){
+    var t=e.target;
+    var a=(t && t.closest)?t.closest('a'):null;
+    if(a){e.preventDefault();e.stopPropagation();}
+  }, true);
 
   d.querySelectorAll('h1,h2,h3,h4,h5,h6,p,span,li,a,label,strong,em,b,small,button').forEach(el=>{
     if(el.closest('script,style')) return;
@@ -49,9 +53,13 @@ function bindEditable(){
 function pickImage(file){ if(!file||!imageKey) return; const r=new FileReader(); r.onload=()=>{ data[imageKey]=r.result; const d=$('#live').contentDocument; if(d){ d.querySelectorAll(`[data-key-src="${imageKey}"]`).forEach(el=>{el.src=r.result;el.style.display='block';}); d.querySelectorAll(`[data-bg-key="${imageKey}"]`).forEach(el=>el.style.backgroundImage=`linear-gradient(rgba(10,56,136,.56),rgba(10,56,136,.62)),url(${r.result})`); const ph=d.getElementById('wechatQrPlaceholder'); if(ph&&imageKey==='contactWeChatQr') ph.style.display='none'; } msg('已更新图片：'+imageKey); debounceSave(); }; r.readAsDataURL(file); }
 
 function openMapSettings(){
-  const embed=prompt('请输入地图链接（高德分享链接/iframe地址）', data.contactMapEmbed||'') ?? data.contactMapEmbed||'';
-  const tip=prompt('无地图时提示文案', data.contactMapTip||'请在后台设置地图链接（支持高德分享链接/iframe地址）') ?? data.contactMapTip||'';
-  data.contactMapEmbed=embed.trim(); data.contactMapTip=tip.trim(); msg('地图设置已更新'); debounceSave();
+  var e=prompt('请输入地图链接（高德分享链接/iframe地址）', data.contactMapEmbed||'');
+  var t=prompt('无地图时提示文案', data.contactMapTip||'请在后台设置地图链接（支持高德分享链接/iframe地址）');
+  if(e===null) e=data.contactMapEmbed||'';
+  if(t===null) t=data.contactMapTip||'';
+  data.contactMapEmbed=String(e).trim();
+  data.contactMapTip=String(t).trim();
+  msg('地图设置已更新'); debounceSave();
 }
 
 async function saveAll(silent){
