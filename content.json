@@ -67,5 +67,38 @@
       "meta": "活动资讯｜2026-03-10",
       "image": ""
     }
-  ]
+  ],
+  "customText": {
+    "section:1>div:2>article:0>h3:0": "美的系工程配套",
+    "section:1>div:2>article:0>p:1": "支持多品类组合采购、批量配送、标准安装和售后协同，适配工程项目交付节奏。",
+    "section:1>div:2>article:1>p:1": "面向高端住宅与品质客户，提供美学、智能、体验一体化的家电配置服务。",
+    "section:1>div:2>article:1>h3:0": "COLMO高端家电体系",
+    "section:1>div:2>article:2>p:1": "覆盖洗衣机、干衣机、洗烘套装与场景组合，提供从选型到落地的完整方案。",
+    "section:1>div:2>article:2>h3:0": "小天鹅洗护体系",
+    "section:2>div:0>h2:0": "核心能力矩阵",
+    "section:2>div:0>div:1>article:0>h3:0": "售前咨询",
+    "section:2>div:0>div:1>article:0>p:1": "基于户型、预算、客群定位提供分层方案，清晰匹配不同需求。",
+    "section:2>div:0>div:1>article:1>p:1": "执行标准化配送、安装、调试、验收流程，减少项目不确定性。",
+    "section:2>div:0>div:1>article:1>h3:0": "交付实施",
+    "section:2>div:0>div:1>article:2>h3:0": "售后保障",
+    "section:2>div:0>div:1>article:2>p:1": "建立问题快速响应机制，提供保修协同、回访与维保建议。",
+    "section:2>div:0>div:1>article:3>h3:0": "长期运营",
+    "section:2>div:0>div:1>article:3>p:1": "通过巡检、耗材提醒和系统优化，保障设备长期稳定运行。",
+    "section:3>h2:0": "服务流程",
+    "section:3>div:1>article:0>p:1": "明确使用人数、空间场景、预算范围、交付时间。",
+    "section:3>div:1>article:0>h3:0": "01 需求沟通",
+    "section:3>div:1>article:1>p:1": "输出产品清单、价格结构、安装条件和实施计划。",
+    "section:3>div:1>article:1>h3:0": "02 方案配置",
+    "section:3>div:1>article:2>h3:0": "03 安装联调",
+    "section:3>div:1>article:2>p:1": "按标准施工并完成全链路联调，确保可用、好用、稳定。",
+    "section:3>div:1>article:3>p:1": "交付培训、文档留存、售后联系人与响应机制同步。",
+    "section:3>div:1>article:3>h3:0": "04 验收运维",
+    "section:4>div:0>h2:0": "合作客户类型",
+    "section:4>div:0>div:1>article:0>h3:0": "家庭客户",
+    "section:4>div:0>div:1>article:0>p:1": "新房装修、旧房换新、全屋升级、品质改善型采购。",
+    "section:4>div:0>div:1>article:1>p:1": "长期供货合作、活动支持、陈列与样机配置建议。",
+    "section:4>div:0>div:1>article:1>h3:0": "门店渠道",
+    "section:4>div:0>div:1>article:2>h3:0": "工程客户",
+    "section:4>div:0>div:1>article:2>p:1": "酒店、公寓、学校、企业办公等项目型需求。"
+  }
 }
