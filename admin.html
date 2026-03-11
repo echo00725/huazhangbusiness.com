@@ -40,6 +40,18 @@ function debounceSave(){ if(!autoSave) return; clearTimeout(t); t=setTimeout(()=
 
 function openPage(path){ const f=document.getElementById('live'); f.src=(path||'/')+'?_v='+Date.now(); }
 
+function attachUploadHint(doc,el,key,label){
+  if(!el || el.dataset.ocHintBound==='1') return;
+  el.dataset.ocHintBound='1';
+  if(getComputedStyle(el).position==='static') el.style.position='relative';
+  const hint=doc.createElement('button');
+  hint.type='button';
+  hint.textContent=label||'请上传该区域图片';
+  hint.style.cssText='position:absolute;right:8px;top:8px;z-index:9999;border:0;border-radius:6px;padding:4px 8px;font-size:12px;background:rgba(22,163,74,.92);color:#fff;cursor:pointer';
+  hint.onclick=(e)=>{e.preventDefault();e.stopPropagation();imageKey=key;document.getElementById('pick').click();setMsg('选择图片上传：'+key);};
+  el.appendChild(hint);
+}
+
 function bindEditable(){
   const f=document.getElementById('live');
   const doc=f.contentDocument;
@@ -57,22 +69,21 @@ function bindEditable(){
     el.oninput=()=>{data[k]=el.textContent.trim(); debounceSave();};
   });
 
-  // 图片点一下可替换
+  // 图片：仅点“上传提示”触发上传，不再抢文字点击
   doc.querySelectorAll('[data-key-src]').forEach(el=>{
     const k=el.getAttribute('data-key-src');
-    el.style.cursor='pointer';
-    el.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); imageKey=k; document.getElementById('pick').click(); setMsg('选择图片上传：'+k); };
-    el.onmouseenter=()=>el.style.outline='2px dashed #16a34a';
-    el.onmouseleave=()=>el.style.outline='none';
+    el.style.outline='2px dashed rgba(22,163,74,.45)';
+    el.style.outlineOffset='2px';
+    const wrap=el.parentElement;
+    if(wrap) attachUploadHint(doc,wrap,k,'请上传该图片');
   });
 
-  // 背景点一下可替换
+  // 背景：仅点“上传提示”触发上传
   doc.querySelectorAll('[data-bg-key]').forEach(el=>{
     const k=el.getAttribute('data-bg-key');
-    el.style.cursor='pointer';
-    el.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); imageKey=k; document.getElementById('pick').click(); setMsg('选择背景上传：'+k); };
-    el.onmouseenter=()=>el.style.outline='2px dashed #f59e0b';
-    el.onmouseleave=()=>el.style.outline='none';
+    el.style.outline='2px dashed rgba(245,158,11,.4)';
+    el.style.outlineOffset='-2px';
+    attachUploadHint(doc,el,k,'请上传该区域图片');
   });
 }
 
